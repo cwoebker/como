@@ -33,7 +33,7 @@ settings.update(
     version=VERSION,
     description='battery health & more',
     long_description=open('README.md').read(),
-    author='Kenneth Reitz',
+    author='Cecil Woebker',
     author_email='cwoebker@gmail.com',
     url='https://github.com/cwoebker/coco',
     #packages= ['coco',],
