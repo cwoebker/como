@@ -11,7 +11,7 @@ except ImportError:
 
 
 APP_NAME = 'coco'
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 
 
 # Grab requirments.
