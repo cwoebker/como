@@ -3,10 +3,10 @@ coco: batteries complete
 
 `coco.py <http://cwoebker.github.com/coco>`_ is a minimalistic utillity to monitor and log battery health & more. (Mac only)
 
-`Status <http://travis-ci.org/cwoebker/relo>`_
+`Status <http://travis-ci.org/cwoebker/coco>`_
 ----------------------------------------------------
 
-.. image:: https://secure.travis-ci.org/cwoebker/relo.png?branch=master
+.. image:: https://secure.travis-ci.org/cwoebker/coco.png?branch=master
 
 Usage
 -----
@@ -42,7 +42,7 @@ Advanced
 
 So go out there and hack some code!
 
-Question's and suggestions, feel free to shoot me an email <cwoebker@gmail.com>
+Question's and suggestions, feel free to shoot me an email <me@cwoebker.com>
 
 Follow `@cwoebker <http://twitter.com/cwoebker>`_
 
