@@ -1,30 +1,30 @@
 coco: batteries complete
 ========================
 
-`coco.py <http://cwoebker.github.com/coco>`_ is a minimalistic utillity to monitor and log battery health & more. (Mac only)
+`coco.py <http://cwoebker.github.com/coco>`_ is a minimalistic utillity to monitor and log battery health & more.
 
 `Status <http://travis-ci.org/cwoebker/coco>`_
-----------------------------------------------------
+----------------------------------------------
 
 .. image:: https://secure.travis-ci.org/cwoebker/coco.png?branch=master
 
 Usage
 -----
 
-``relo config``
-    Changes settings and other global variables.
+``coco``
+    Saves the current battery state.
 
-``relo update``
-    Updates the relo installation.
+``coco stats``
+    Prints information about battery and battery history.
 
-``relo index``
-    Creates an index of a given directory.
+``coco reset``
+    Removes all entries in database.
 
-``relo search``
-    Either searches a filesystem or an index if available.
+``coco --help``
+    Shows a complete help.
 
-``relo stats``
-    Analyzes a filesystem or an index if available.
+``coco --version``
+    Shows the current version.
 
 
 Installation
@@ -32,13 +32,15 @@ Installation
 
 Installing coco is simple:
 
-    $ pip install legit
+    $ pip install coco
 
 
 Advanced
 --------
 
-``coco.py`` stores all battery information in the file ``~/.coco``. You are free to do whatever you want with the data in that file, its yours after all. 
+``coco.py`` stores all battery information in the file ``~/.coco``.
+You are free to do whatever you want with the data in that file, 
+its yours after all.
 
 So go out there and hack some code!
 
@@ -47,7 +49,17 @@ Question's and suggestions, feel free to shoot me an email <me@cwoebker.com>
 Follow `@cwoebker <http://twitter.com/cwoebker>`_
 
 
-Caveats
--------
+Contribute
+----------
 
-- **Warning:** This is still beta. Do not use for anything hugely important.
+Fork and contribute!
+
+TODO
+----
+
+    - Cross-Platform
+
+---------------
+
+Copyright (c) 2012, Cecil Woebker.
+License: BSD (see LICENSE for details)

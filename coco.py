@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-A minimalistic utillity to monitor and log battery health & more. (Mac only)
-
+A minimalistic utillity to monitor and log battery health & more.
 
 Homepage and documentation: cwoebker.github.com/coco
 
@@ -13,7 +12,7 @@ License: BSD (see LICENSE for details)
 from __future__ import with_statement
 
 __author__ = 'Cecil Woebker'
-__version__ = '0.0.2'
+__version__ = '0.1.0'
 __license__ = 'BSD'
 
 from docopt import docopt
@@ -156,7 +155,7 @@ if __name__ == "__main__":
 
 Usage:
   coco.py
-  coco.py rm
+  coco.py reset
   coco.py stats
   coco.py test <n>
   coco.py -h | --help
@@ -168,7 +167,7 @@ Options:
 
 """
     args = docopt(define, help=True, version=("coco v" + str(__version__)))
-    if args["rm"]:
+    if args["reset"]:
         rm()
     elif args["stats"]:
         stats()
