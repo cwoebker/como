@@ -1,5 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+A minimalistic utillity to monitor and log battery health & more. (Mac only)
+
+
+Homepage and documentation: cwoebker.github.com/coco
+
+Copyright (c) 2012, Cecil Woebker.
+License: BSD (see LICENSE for details)
+"""
+
+from __future__ import with_statement
+
+__author__ = 'Cecil Woebker'
+__version__ = '0.0.2'
+__license__ = 'BSD'
+
+from docopt import docopt
 
 import sys
 import os
@@ -58,16 +75,30 @@ def rm():
 def test(number):
     for i in range(number):
         main()
-        sys.stdout.write('.')
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        if sys.argv[1] == 'stats':
-            stats()
-        elif sys.argv[1] == 'rm':
-            rm()
-        elif sys.argv[1] == 'test':
-            test(int(sys.argv[2]))
+    define = """coco.
+
+Usage:
+  coco.py
+  coco.py rm
+  coco.py stats
+  coco.py test <n>
+  coco.py -h | --help
+  coco.py --version
+
+Options:
+  -h, --help            Show this screen.
+  --version             Show version.
+
+"""
+    args = docopt(define, help=True, version=("coco v" + str(__version__)))
+    if args["rm"]:
+        rm()
+    elif args["stats"]:
+        stats()
+    elif args["test"]:
+        test(int(args["<n>"]))
     else:
         main()
