@@ -1,50 +1,44 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import sys
-
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup
 
+import coco
 
 APP_NAME = 'coco'
-VERSION = '0.0.2'
 
 
 # Grab requirments.
 with open('reqs.txt') as f:
-    required = f.readlines()
+    require = f.readlines()
 
+tests_require = ['nose']
 
-settings = dict()
-
-
-# Publish Helper.
-if sys.argv[-1] == 'publish':
-    os.system('python setup.py sdist upload')
-    sys.exit()
-
-
-settings.update(
+setup(
     name=APP_NAME,
-    version=VERSION,
+    version=coco.__version__,
     description='battery health & more',
-    long_description=open('README.md').read(),
-    author='Cecil Woebker',
+    long_description=coco.__doc__,
+    author=coco.__author__,
     author_email='cwoebker@gmail.com',
-    url='https://github.com/cwoebker/coco',
-    #packages= ['coco',],
-    install_requires=required, 
-    py_modules=['coco'],
-    scripts=['coco.py'],
+    url='https://cwoebker.github.com/coco',
+    install_requires=require,
+    tests_require=tests_require,
+    test_suite='nose.collector',
+    #py_modules=['coco'],
+    #scripts=['coco.py'],
+    include_package_data=True,
     license='BSD',
+    platforms='mac',
     classifiers=(
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
         'Natural Language :: English',
+        'Topic :: Software Development',
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.6',
@@ -54,9 +48,6 @@ settings.update(
         'console_scripts': [
             'coco = coco:main',
         ],
-    }
+    },
+    zip_safe=False,
 )
-
-
-
-setup(**settings)
