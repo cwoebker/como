@@ -1,6 +1,6 @@
 # coco: batteries complete
 
-[`coco.py`](http://cwoebker.github.com/coco) is a minimalistic utillity to monitor and log battery health & more.
+[`coco.py`](https://github.com/cwoebker/coco/blob/master/coco.py) is a minimalistic utillity to monitor and log battery health & more.
 
 [![Status unavailable](https://secure.travis-ci.org/cwoebker/coco.png?branch=master)](http://travis-ci.org/cwoebker/coco)
 
@@ -13,6 +13,10 @@
 `coco stats`
 
 - Prints information about battery and battery history.
+
+`coco graph`
+
+- Graphs the capacity history.
 
 `coco reset`
 
@@ -27,7 +31,7 @@
 - Shows the current version.
 
 
-## Usage
+## Installation
 
 Installing coco is simple:
 
@@ -54,6 +58,9 @@ Fork and contribute!
 ## TODO
 
 - Cross-Platform
+- Statistical Analysis on Data
+- Uploading data to server
+- Graphing
 
 ---------------
 
