@@ -1,3 +1,2 @@
 docopt
 clint
-matplotlib
