@@ -77,8 +77,19 @@ if platform.system() == "Darwin":
         battery['voltage'] = int(battery['legacy'].translate(None, '{}=').split(',')[4].lstrip('Voltage'))
         battery['designcap'] = int(batList[3].lstrip('DesignCapacity='))
         return battery
+
 elif platform.system() == "Linux":
-    pass
+    def battery():
+        battery = {}
+        battery['serial'] = subprocess.check_output("grep \"^serial number\" /proc/acpi/battery/BAT0/info | awk '{ print $3 }'", shell=True).translate(None, '\n')
+
+        battery['state'] = subprocess.check_output("grep \"^charging state\" /proc/acpi/battery/BAT0/state | awk '{ print $3 }'", shell=True)
+        battery['maxcap'] = float(subprocess.check_output("grep \"^last full capacity\" /proc/acpi/battery/BAT0/info | awk '{ print $4 }'", shell=True))
+        battery['curcap'] = float(subprocess.check_output("grep \"^remaining capacity\" /proc/acpi/battery/BAT0/state | awk '{ print $3 }'", shell=True))
+        battery['designcap'] = float(subprocess.check_output("grep \"^design capacity:\" /proc/acpi/battery/BAT0/info | awk '{ print $3 }'", shell=True))
+
+        battery['cycles'] = int(subprocess.check_output("grep \"^cycle count\" /proc/acpi/battery/BAT0/info", shell=True).lstrip("cycle count:").translate(None, ' '))
+        return battery
 
 
 def main():
@@ -118,9 +129,10 @@ def stats():
         puts("Design Capacity: %s" % bat['designcap'])
         puts("Max Capacity: %s" % bat['maxcap'])
         puts("Capacity: %s" % bat['curcap'])
-        puts("Temperature: %s ℃" % (int(bat['temp']) / 100.))
-        puts("Voltage: %s" % bat['voltage'])
-        puts("Amperage: %s" % bat['amperage'])
+        if platform.system() == "Darwin":  # Mac OS only
+            puts("Temperature: %s ℃" % (int(bat['temp']) / 100.))
+            puts("Voltage: %s" % bat['voltage'])
+            puts("Amperage: %s" % bat['amperage'])
         if not os.path.exists(COCO_BATTERY_FILE):
             puts(colored.red("No coco database."))
         else:
@@ -159,7 +171,7 @@ def test(number):
 
 
 def run():
-    if platform.system() not in ['Darwin']:
+    if platform.system() not in ['Darwin', 'Linux']:
         puts(colored.red("Operating System not supported."), stream=sys.stderr.write)
         return
     define = """coco.
