@@ -12,7 +12,7 @@ License: BSD (see LICENSE for details)
 from __future__ import with_statement
 
 __author__ = 'Cecil Woebker'
-__version__ = '0.1.0'
+__version__ = '0.1.2'
 __license__ = 'BSD'
 
 from docopt import docopt
