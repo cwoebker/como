@@ -97,48 +97,51 @@ def main():
 
 
 def stats():
-    if not os.path.exists(COCO_BATTERY_FILE):
-        puts("No coco database.")
-        return NO_DATABASE
     with indent(4):
         title = "Coco Statistics"
         puts(colored.green(title))
     puts("-" * (8 + len(title)))
 
-    # Gathering data
-    with open(COCO_BATTERY_FILE, 'r') as coco:
-        data = json.loads(coco.read())
     bat = battery()
     # ser = serial()
 
     with indent(8, quote=colored.yellow('        ')):
+        #puts(colored.yellow("Current:"))
+        #with indent(4, quote=colored.yellow('    ')):
         puts("Serial Number: %s" % bat['serial'])
-        # puts("Creation Time: %s Year, %s Week" % (ser['year'], ser['week']))
-        puts("Number of Entries: %d" % len(data))
-        puts("Design Capacity: %s" % bat['designcap'])
-        puts("Last save (UTC): " + str(data[-1]['time']))
-        timedelta = datetime.now() - datetime.strptime(data[0]['time'], "%Y-%m-%dT%H:%M:%S")
-        puts("Age of Database: %s Days" % str(timedelta.days))
         puts("Number of cycles: %s" % bat['cycles'])
-        puts(colored.yellow("Current:"))
-        with indent(4, quote=colored.yellow('  - ')):
-            puts("Max Capacity: %s" % bat['maxcap'])
-            puts("Capacity: %s" % bat['curcap'])
-            puts("Temperature: %s ℃" % (int(bat['temp']) / 100.))
-            puts("Voltage: %s" % bat['voltage'])
-            puts("Amperage: %s" % bat['amperage'])
-        puts(colored.yellow("History:"))
-    history = []
-    history.append(bat['designcap'])
-    for element in data:
-        history.append(int(element['maxcap']))
-    spark_print(history)
-    with indent(8, quote=colored.yellow('        ')):
-        puts(colored.yellow("Cycles:"))
-    cycles = []
-    for element in data:
-        cycles.append(int(element['cycles']))
-    spark_print(cycles)
+        puts("Design Capacity: %s" % bat['designcap'])
+        puts("Max Capacity: %s" % bat['maxcap'])
+        puts("Capacity: %s" % bat['curcap'])
+        puts("Temperature: %s ℃" % (int(bat['temp']) / 100.))
+        puts("Voltage: %s" % bat['voltage'])
+        puts("Amperage: %s" % bat['amperage'])
+        if not os.path.exists(COCO_BATTERY_FILE):
+            puts(colored.red("No coco database."))
+        else:
+            # Gathering data
+            with open(COCO_BATTERY_FILE, 'r') as coco:
+                data = json.loads(coco.read())
+            puts(colored.yellow("Database:"))
+            with indent(4, quote=colored.yellow('    ')):
+                # puts("Creation Time: %s Year, %s Week" % (ser['year'], ser['week']))
+                puts("Number of Entries: %d" % len(data))
+                puts("Last save (UTC): " + str(data[-1]['time']))
+                timedelta = datetime.now() - datetime.strptime(data[0]['time'], "%Y-%m-%dT%H:%M:%S")
+                puts("Age of Database: %s Days" % str(timedelta.days))
+                # History
+                puts(colored.yellow("History:"))
+                history = []
+                history.append(bat['designcap'])
+                for element in data:
+                    history.append(int(element['maxcap']))
+                spark_print(history)
+                # Cycles
+                puts(colored.yellow("Cycles:"))
+                cycles = []
+                for element in data:
+                    cycles.append(int(element['cycles']))
+                spark_print(cycles)
 
 
 def rm():
