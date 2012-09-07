@@ -1,2 +1,2 @@
-reqs.txt
-README.rst
+include reqs.txt
+include README.rst
