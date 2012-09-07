@@ -22,9 +22,9 @@ script: nosetests
 #  -
 
 # command to install dependencies
-#before_command:
-#  -
-install:
+before_command:
   - pip install -r reqs.txt --use-mirrors
+install:
+  - python setup.py install
 #after_command:
 #  -

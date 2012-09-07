@@ -24,15 +24,14 @@ setup(
     long_description=coco.__doc__,
     author=coco.__author__,
     author_email='cwoebker@gmail.com',
-    url='https://cwoebker.github.com/coco',
+    url='https://cwoebker.com/projects/coco',
+    packages=find_packages(),
+    include_package_data=True,
     install_requires=require,
     tests_require=tests_require,
     test_suite='nose.collector',
     #py_modules=['coco'],
-    #scripts=['coco.py'],
-    include_package_data=True,
-    license='BSD',
-    platforms='mac',
+    scripts=['coco.py'],
     classifiers=(
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
@@ -46,7 +45,7 @@ setup(
     ),
     entry_points={
         'console_scripts': [
-            'coco = coco:main',
+            'coco = coco:run',
         ],
     },
     zip_safe=False,

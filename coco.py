@@ -150,7 +150,7 @@ def test(number):
         main()
 
 
-if __name__ == "__main__":
+def run():
     define = """coco.
 
 Usage:
@@ -175,3 +175,6 @@ Options:
         test(int(args["<n>"]))
     else:
         main()
+
+if __name__ == "__main__":
+    run()
