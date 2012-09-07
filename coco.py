@@ -17,8 +17,10 @@ __license__ = 'BSD'
 
 from docopt import docopt
 
+import sys
 import os
 import subprocess
+import platform
 import json
 from datetime import datetime
 
@@ -47,33 +49,36 @@ def spark_print(ints):
     """Prints spark to given stream."""
     puts(spark_string(ints).encode('utf-8'))
 
+##### Platform specific code #####
 
-def serial():
-    serial = {}
-    cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
-    serial['number'] = subprocess.check_output(cmd, shell=True).translate(None, '\n')
-    temp = serial['number']
-    for code in locationCodes:
-        temp = temp.lstrip(code)
-    serial['year'] = int(temp[0])
-    serial['week'] = int(temp[1:3])
-    return serial
+if platform.system() == "Darwin":
+    def serial():
+        serial = {}
+        cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
+        serial['number'] = subprocess.check_output(cmd, shell=True).translate(None, '\n')
+        temp = serial['number']
+        for code in locationCodes:
+            temp = temp.lstrip(code)
+        serial['year'] = int(temp[0])
+        serial['week'] = int(temp[1:3])
+        return serial
 
-
-def battery():
-    batList = subprocess.check_output('ioreg -w0 -l | grep Capacity', shell=True).translate(None, ' "|').split('\n')
-    temp = subprocess.check_output('ioreg -w0 -l | grep Temperature', shell=True).translate(None, '\n "|').lstrip('Temperature=')
-    battery = {}
-    battery['serial'] = subprocess.check_output('ioreg -w0 -l | grep BatterySerialNumber', shell=True).translate(None, '\n "|').lstrip('BatterySerialNumber=')
-    battery['temp'] = int(temp)
-    battery['maxcap'] = int(batList[0].lstrip('MaxCapacity='))
-    battery['curcap'] = int(batList[1].lstrip('CurrentCapacity='))
-    battery['legacy'] = batList[2].lstrip('LegacyBatteryInfo=')
-    battery['cycles'] = int(battery['legacy'].translate(None, '{}=').split(',')[5].lstrip('CycleCount'))
-    battery['amperage'] = int(battery['legacy'].translate(None, '{}=').split(',')[0].lstrip('Amperage'))
-    battery['voltage'] = int(battery['legacy'].translate(None, '{}=').split(',')[4].lstrip('Voltage'))
-    battery['designcap'] = int(batList[3].lstrip('DesignCapacity='))
-    return battery
+    def battery():
+        batList = subprocess.check_output('ioreg -w0 -l | grep Capacity', shell=True).translate(None, ' "|').split('\n')
+        temp = subprocess.check_output('ioreg -w0 -l | grep Temperature', shell=True).translate(None, '\n "|').lstrip('Temperature=')
+        battery = {}
+        battery['serial'] = subprocess.check_output('ioreg -w0 -l | grep BatterySerialNumber', shell=True).translate(None, '\n "|').lstrip('BatterySerialNumber=')
+        battery['temp'] = int(temp)
+        battery['maxcap'] = int(batList[0].lstrip('MaxCapacity='))
+        battery['curcap'] = int(batList[1].lstrip('CurrentCapacity='))
+        battery['legacy'] = batList[2].lstrip('LegacyBatteryInfo=')
+        battery['cycles'] = int(battery['legacy'].translate(None, '{}=').split(',')[5].lstrip('CycleCount'))
+        battery['amperage'] = int(battery['legacy'].translate(None, '{}=').split(',')[0].lstrip('Amperage'))
+        battery['voltage'] = int(battery['legacy'].translate(None, '{}=').split(',')[4].lstrip('Voltage'))
+        battery['designcap'] = int(batList[3].lstrip('DesignCapacity='))
+        return battery
+elif platform.system() == "Linux":
+    pass
 
 
 def main():
@@ -154,6 +159,9 @@ def test(number):
 
 
 def run():
+    if platform.system() not in ['Darwin']:
+        puts(colored.red("Operating System not supported."), stream=sys.stderr.write)
+        return
     define = """coco.
 
 Usage:
