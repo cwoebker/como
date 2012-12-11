@@ -24,10 +24,7 @@ import platform
 import json
 from datetime import datetime
 
-from clint.textui import puts, indent, colored, progress
-
-import matplotlib
-import pylab
+from clint.textui import puts, indent, colored
 
 NO_DATABASE = 11
 
@@ -164,41 +161,8 @@ def stats():
                 spark_print(cycles)
 
 
-def graph():
-    if not os.path.exists(COCO_BATTERY_FILE):
-        puts(colored.red("No coco database."))
-    else:
-        # Gathering data
-        with open(COCO_BATTERY_FILE, 'r') as coco:
-            data = json.loads(coco.read())
-        puts("Setup...")
-        datetimes = []
-        history = []
-        fig = pylab.figure()
-        ax = fig.add_subplot(111)
-        puts("Processing...")
-        for item in progress.bar(data):
-            datetimes.append(datetime.strptime(item['time'], "%Y-%m-%dT%H:%M:%S"))
-            history.append(int(item['maxcap']))
-        dates = matplotlib.dates.date2num(datetimes)
-        ax.plot_date(dates, history)
-        puts("Preparing...")
-        ax.autoscale_view()
-        ax.grid(True)
-        fig.autofmt_xdate()
-        puts("Saving...")
-        fig.savefig('graph.png')  # , transparent=True, bbox_inches='tight', pad_inches=10)
-        puts("Done!")
-        os.system("open graph.png")
-
-
 def rm():
     os.remove(COCO_BATTERY_FILE)
-
-
-def test(number):
-    for i in range(number):
-        main()
 
 
 def run():
@@ -211,8 +175,6 @@ Usage:
   coco.py
   coco.py reset
   coco.py stats
-  coco.py graph
-  coco.py test <n>
   coco.py -h | --help
   coco.py --version
 
@@ -223,13 +185,11 @@ Options:
 """
     args = docopt(define, help=True, version=("coco v" + str(__version__)))
     if args["reset"]:
-        rm()
+        sure = raw_input("Are you sure? [yes/no] ")
+        if sure == "yes":
+            rm()
     elif args["stats"]:
         stats()
-    elif args['graph']:
-        graph()
-    elif args["test"]:
-        test(int(args["<n>"]))
     else:
         main()
 

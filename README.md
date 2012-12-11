@@ -4,36 +4,38 @@
 
 [![Status unavailable](https://secure.travis-ci.org/cwoebker/coco.png?branch=master)](http://travis-ci.org/cwoebker/coco)
 
+---
+
 ## Usage
 
-`coco`
+    coco
 
 - Saves the current battery state.
 
-`coco stats`
+    coco stats
 
 - Prints information about battery and battery history.
 
-`coco graph`
+    coco graph
 
 - Graphs the capacity history.
 
-`coco reset`
+    coco reset
 
 - Removes all entries in database.
 
-`coco --help`
+    coco --help
 
 - Shows a complete help.
 
-`coco --version`
+    coco --version
 
 - Shows the current version.
 
 
 ## Installation
 
-Installing coco is simple:
+Installing coco is **simple**:
 
     $ pip install coco
 
@@ -46,11 +48,6 @@ its yours after all.
 
 So go out there and hack some code!
 
-Question's and suggestions, feel free to shoot me an email <me@cwoebker.com>
-
-Follow [@cwoebker](http://twitter.com/cwoebker)
-
-
 ## Contribute
 
 Fork and contribute!
@@ -62,9 +59,13 @@ Fork and contribute!
 - Uploading data to server
 - Graphing
 
----------------
+---
 
+Question's and suggestions, feel free to shoot me an email <me@cwoebker.com>
 
+Follow [@cwoebker](http://twitter.com/cwoebker)
+
+---
 
 Copyright (c) 2012, Cecil Woebker.
 License: BSD (see LICENSE for details)
