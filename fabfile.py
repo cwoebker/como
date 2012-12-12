@@ -16,5 +16,9 @@ def init():
     local('pip install -r reqs.txt --use-mirrors')
 
 
+def reset():
+    local('pip uninstall coco')
+
+
 def version_raise():
     pass
