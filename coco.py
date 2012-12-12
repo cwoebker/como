@@ -3,7 +3,7 @@
 """
 A minimalistic utility to monitor and log battery health & more.
 
-Homepage and documentation: cwoebker.github.com/coco
+Homepage and documentation: github.com/cwoebker/coco
 
 Copyright (c) 2012, Cecil Woebker.
 License: BSD (see LICENSE for details)
@@ -145,8 +145,8 @@ def stats():
             with indent(4, quote=colored.yellow('    ')):
                 # puts("Creation Time: %s Year, %s Week" % (ser['year'], ser['week']))
                 puts("Number of Entries: %d" % len(data))
-                puts("First save (UTC): " + str(data[0]['time']))
-                puts("Last save (UTC): " + str(data[-1]['time']))
+                puts("First save: " + str(data[0]['time']))
+                puts("Last save: " + str(data[-1]['time']))
                 timedelta = datetime.now() - datetime.strptime(data[0]['time'], "%Y-%m-%dT%H:%M:%S")
                 puts("Age of Database: %s Days" % str(timedelta.days))
                 # History
