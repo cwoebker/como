@@ -16,6 +16,10 @@ def init():
     local('pip install -r reqs.txt --use-mirrors')
 
 
+def install():
+    local('python setup.py install')
+
+
 def reset():
     local('pip uninstall coco')
 
