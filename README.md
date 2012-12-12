@@ -48,16 +48,23 @@ its yours after all.
 
 So go out there and hack some code!
 
-## Contribute
+## Features ##
 
-Fork and contribute!
+- Cross-Platform (Linux & Mac)
+- Automatically run with `cron` scheduling
+- Export to `.csv`
+- Simple Statistics
+- Histories for Cycles and Capacity
 
 ## TODO
 
-- Cross-Platform
 - Statistical Analysis on Data
 - Uploading data to server
 - Graphing
+
+## Contribute
+
+Fork and contribute!
 
 ---
 
