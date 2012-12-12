@@ -27,6 +27,7 @@ from datetime import datetime
 
 from clint.textui import puts, indent, colored
 from crontab import CronTab
+from tablib import Dataset
 
 NO_DATABASE = 11
 
@@ -169,8 +170,12 @@ def save():
     else:
         with open(COCO_BATTERY_FILE, 'r') as coco:
             data = json.loads(coco.read())
+        csv = Dataset()
         for item in data:
-            print item
+            csv.append(item.values())
+        csv.headers = ['Cycles', 'Capacity', 'Time']
+        with open("coco.csv", "w") as coco:
+            coco.write(csv.csv)
 
 
 def install():
