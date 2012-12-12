@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-A minimalistic utillity to monitor and log battery health & more.
+A minimalistic utility to monitor and log battery health & more.
 
 Homepage and documentation: cwoebker.github.com/coco
 
@@ -11,15 +11,14 @@ License: BSD (see LICENSE for details)
 
 from __future__ import with_statement
 
-__author__ = 'Cecil Woebker'
-__version__ = '0.1.2.2'
+__author__ = 'cwoebker'
+__version__ = '0.3'
 __license__ = 'BSD'
 
 from docopt import docopt
 
 import sys
 import os
-import getpass
 import subprocess
 import platform
 import json

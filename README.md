@@ -10,27 +10,27 @@
 
     coco
 
-- Saves the current battery state.
+Saves the current battery state.
 
     coco stats
 
-- Prints information about battery and battery history.
+Prints information about battery and battery history.
 
     coco graph
 
-- Graphs the capacity history.
+Graphs the capacity history.
 
     coco reset
 
-- Removes all entries in database.
+Removes all entries in database.
 
     coco --help
 
-- Shows a complete help.
+Shows a complete help.
 
     coco --version
 
-- Shows the current version.
+Shows the current version.
 
 
 ## Installation
