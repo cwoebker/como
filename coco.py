@@ -19,12 +19,14 @@ from docopt import docopt
 
 import sys
 import os
+import getpass
 import subprocess
 import platform
 import json
 from datetime import datetime
 
 from clint.textui import puts, indent, colored
+from crontab import CronTab
 
 NO_DATABASE = 11
 
@@ -121,7 +123,7 @@ def stats():
     bat = battery()
     # ser = serial()
 
-    with indent(8, quote=colored.yellow('        ')):
+    with indent(6, quote=colored.yellow('      ')):
         #puts(colored.yellow("Current:"))
         #with indent(4, quote=colored.yellow('    ')):
         puts("Serial Number: %s" % bat['serial'])
@@ -143,26 +145,50 @@ def stats():
             with indent(4, quote=colored.yellow('    ')):
                 # puts("Creation Time: %s Year, %s Week" % (ser['year'], ser['week']))
                 puts("Number of Entries: %d" % len(data))
+                puts("First save (UTC): " + str(data[0]['time']))
                 puts("Last save (UTC): " + str(data[-1]['time']))
                 timedelta = datetime.now() - datetime.strptime(data[0]['time'], "%Y-%m-%dT%H:%M:%S")
                 puts("Age of Database: %s Days" % str(timedelta.days))
                 # History
                 puts(colored.yellow("History:"))
                 history = []
-                history.append(bat['designcap'])
                 for element in data:
                     history.append(int(element['maxcap']))
-                spark_print(history)
+                spark_print([h - min(history) for h in history])
                 # Cycles
                 puts(colored.yellow("Cycles:"))
                 cycles = []
                 for element in data:
                     cycles.append(int(element['cycles']))
-                spark_print(cycles)
+                spark_print([c - min(cycles) for c in cycles])
 
 
-def rm():
+def save():
+    if not os.path.exists(COCO_BATTERY_FILE):
+            puts(colored.red("No coco database."))
+    else:
+        with open(COCO_BATTERY_FILE, 'r') as coco:
+            data = json.loads(coco.read())
+        for item in data:
+            print item
+
+
+def install():
+    user_cron = CronTab(str(getpass.getuser()))
+    job = user_cron.new(command="coco")
+    job.hour.every(24)
+    user_cron.write()
+
+
+def remove():
+    user_cron = CronTab(getpass.getuser())
+    user_cron.remove_all("coco")
+    user_cron.write()
+
+
+def reset():
     os.remove(COCO_BATTERY_FILE)
+    remove()
 
 
 def run():
@@ -175,21 +201,30 @@ Usage:
   coco.py
   coco.py reset
   coco.py stats
+  coco.py save
+  coco.py install
+  coco.py remove
   coco.py -h | --help
   coco.py --version
 
 Options:
-  -h, --help            Show this screen.
-  --version             Show version.
+  -h, --help
+  --version
 
 """
     args = docopt(define, help=True, version=("coco v" + str(__version__)))
     if args["reset"]:
-        sure = raw_input("Are you sure? [yes/no] ")
+        sure = raw_input("Are you sure? this will remove everything! [yes/no] ")
         if sure == "yes":
-            rm()
+            reset()
     elif args["stats"]:
         stats()
+    elif args["save"]:
+        save()
+    elif args["install"]:
+        install()
+    elif args["remove"]:
+        remove()
     else:
         main()
 
