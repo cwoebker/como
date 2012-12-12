@@ -166,7 +166,7 @@ def stats():
 
 def save():
     if not os.path.exists(COCO_BATTERY_FILE):
-            puts(colored.red("No coco database."))
+        puts(colored.red("No coco database."))
     else:
         with open(COCO_BATTERY_FILE, 'r') as coco:
             data = json.loads(coco.read())
@@ -176,24 +176,26 @@ def save():
         csv.headers = ['Cycles', 'Capacity', 'Time']
         with open("coco.csv", "w") as coco:
             coco.write(csv.csv)
+        puts(colored.white("saved file to current directory"))
 
 
-def install():
-    user_cron = CronTab(str(getpass.getuser()))
-    job = user_cron.new(command="coco")
-    job.hour.every(24)
-    user_cron.write()
-
-
-def remove():
-    user_cron = CronTab(getpass.getuser())
-    user_cron.remove_all("coco")
-    user_cron.write()
+def auto():
+    user_cron = CronTab()
+    user_cron.read()
+    if len(user_cron.find_command("coco")) > 0:
+        user_cron.remove_all("coco")
+        user_cron.write()
+        puts(colored.white("coco will only run manually"))
+    else:
+        job = user_cron.new(command="coco")
+        job.hour.every(24)
+        user_cron.write()
+        puts(colored.white("coco will run automatically"))
 
 
 def reset():
     os.remove(COCO_BATTERY_FILE)
-    remove()
+    puts(colored.white("cleared history"))
 
 
 def run():
@@ -207,8 +209,7 @@ Usage:
   coco.py reset
   coco.py stats
   coco.py save
-  coco.py install
-  coco.py remove
+  coco.py auto
   coco.py -h | --help
   coco.py --version
 
@@ -226,10 +227,8 @@ Options:
         stats()
     elif args["save"]:
         save()
-    elif args["install"]:
-        install()
-    elif args["remove"]:
-        remove()
+    elif args["auto"]:
+        auto()
     else:
         main()
 
