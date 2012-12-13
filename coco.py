@@ -25,7 +25,10 @@ import json
 from datetime import datetime
 
 from clint.textui import puts, indent, colored
-from crontab import CronTab
+if platform.system() == "Darwin":
+    from os.path import expanduser
+elif platform.system() == "Linux":
+    from crontab import CronTab
 from tablib import Dataset
 
 NO_DATABASE = 11
@@ -178,18 +181,50 @@ def save():
         puts(colored.white("saved file to current directory"))
 
 
+APPLE_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.cwoebker.coco</string>
+    <key>OnDemand</key>
+    <true/>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>Program</key>
+    <string>%s</string>
+    <key>StartInterval</key>
+    <integer>43200</integer>
+</dict>
+</plist>"""
+
+
 def auto():
-    user_cron = CronTab()
-    user_cron.read()
-    if len(user_cron.find_command("coco")) > 0:
-        user_cron.remove_all("coco")
-        user_cron.write()
-        puts(colored.white("coco will only run manually"))
-    else:
-        job = user_cron.new(command="coco")
-        job.hour.every(24)
-        user_cron.write()
-        puts(colored.white("coco will run automatically"))
+    if platform.system() == "Darwin":
+        PLIST_PATH = expanduser("~/Library/LaunchAgents/com.cwoebker.coco.plist")
+        if os.path.exists(PLIST_PATH):
+            os.system("launchctl unload %s" % PLIST_PATH)
+            os.remove(PLIST_PATH)
+            puts(colored.white("coco will only run manually"))
+        else:
+            with open(PLIST_PATH, "w") as f:
+                f.write(APPLE_PLIST % os.popen('which coco').read().rstrip('\n'))
+            os.system("launchctl load %s" % PLIST_PATH)
+            puts(colored.white("coco will run automatically"))
+    elif platform.system() == "Linux":
+        user_cron = CronTab()
+        user_cron.read()
+        if len(user_cron.find_command("coco")) > 0:
+            user_cron.remove_all("coco")
+            user_cron.write()
+            puts(colored.white("coco will only run manually"))
+        else:
+            job = user_cron.new(command="coco")
+            job.minute.every(2)
+            #job.minute.on(0)
+            #job.hour.on(19)
+            user_cron.write()
+            puts(colored.white("coco will run automatically"))
 
 
 def reset():
@@ -200,7 +235,7 @@ def reset():
 def run():
     if platform.system() not in ['Darwin', 'Linux']:
         puts(colored.red("Operating System not supported."), stream=sys.stderr.write)
-        return
+        return 1
     define = """coco.
 
 Usage:

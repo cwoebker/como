@@ -16,9 +16,13 @@ Saves the current battery state.
 
 Prints information about battery and battery history.
 
-    coco graph
+    coco save
 
-Graphs the capacity history.
+Saves data to `coco.csv` file to current directory.
+
+    coco auto
+
+Turns scheduling on or off. (Every 12 hours)
 
     coco reset
 
