@@ -193,8 +193,13 @@ APPLE_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
     <false/>
     <key>Program</key>
     <string>%s</string>
-    <key>StartInterval</key>
-    <integer>43200</integer>
+    <key>StartCalendarInterval</key>
+    <dict>
+      <key>Hour</key>
+      <integer>18</integer>
+      <key>Minute</key>
+      <integer>30</integer>
+    </dict>
 </dict>
 </plist>"""
 
