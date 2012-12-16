@@ -22,7 +22,7 @@ Saves data to `coco.csv` file to current directory.
 
     coco auto
 
-Turns scheduling on or off. (Every 12 hours)
+Turns scheduling on or off. (Every day at 18:30)
 
     coco reset
 
@@ -55,8 +55,8 @@ So go out there and hack some code!
 ## Features ##
 
 - Cross-Platform (Linux & Mac)
-- Automatically run with `cron` scheduling
-- Export to `.csv`
+- Automatically run with `cron`/`launchd` scheduling
+- Export data to `.csv` file
 - Simple Statistics
 - Histories for Cycles and Capacity
 
