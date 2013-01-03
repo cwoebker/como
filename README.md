@@ -46,7 +46,7 @@ Installing coco is **simple**:
 
 ## Advanced
 
-``coco.py`` stores all battery information in the file ``~/.coco``.
+``coco`` stores all battery information in the file ``~/.coco``.
 You are free to do whatever you want with the data in that file,
 its yours after all.
 

@@ -244,13 +244,13 @@ def run():
     define = """coco.
 
 Usage:
-  coco.py
-  coco.py reset
-  coco.py stats
-  coco.py save
-  coco.py auto
-  coco.py -h | --help
-  coco.py --version
+  coco
+  coco reset
+  coco stats
+  coco save
+  coco auto
+  coco -h | --help
+  coco --version
 
 Options:
   -h, --help
