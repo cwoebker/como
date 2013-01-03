@@ -60,12 +60,6 @@ So go out there and hack some code!
 - Simple Statistics
 - Histories for Cycles and Capacity
 
-## TODO
-
-- Statistical Analysis on Data
-- Uploading data to server
-- Graphing
-
 ## Contribute
 
 Fork and contribute!
