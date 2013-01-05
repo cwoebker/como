@@ -85,6 +85,8 @@ if platform.system() == "Darwin":
         battery['legacy'] = batList[2].lstrip('LegacyBatteryInfo=')
         battery['cycles'] = int(battery['legacy'].translate(None, '{}=').split(',')[5].lstrip('CycleCount'))
         battery['amperage'] = int(battery['legacy'].translate(None, '{}=').split(',')[0].lstrip('Amperage'))
+        if battery['amperage'] > 999999:
+            battery['amperage'] -= 18446744073709551615
         battery['voltage'] = int(battery['legacy'].translate(None, '{}=').split(',')[4].lstrip('Voltage'))
         battery['designcap'] = int(batList[3].lstrip('DesignCapacity='))
         return battery
@@ -147,6 +149,7 @@ def stats():
             puts("Temperature: %s ℃" % (int(bat['temp']) / 100.))
             puts("Voltage: %s" % bat['voltage'])
             puts("Amperage: %s" % bat['amperage'])
+            puts("Wattage: %s" % (bat['voltage'] * bat['amperage'] / 1000000.))
         if not os.path.exists(COCO_BATTERY_FILE):
             puts(colored.red("No coco database."))
         else:
