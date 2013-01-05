@@ -4,6 +4,15 @@
 
 [![Status unavailable](https://secure.travis-ci.org/cwoebker/como.png?branch=master)](http://travis-ci.org/cwoebker/como)
 
+## The Name ##
+
+**Why como?**
+
+The answer is simple: Alessandro Volta grew up in the town of [Como](https://maps.google.com/maps/place?ftid=0x47869c481027ed63:0xb99b96af785ff524&q=Como+italy&gl=us&ie=UTF8&ll=45.905539,8.869743&spn=0.000239,0.000343&t=h&z=12&vpsrc=0)
+and since he invented the battery I thought it would be a great name.
+
+![Map not found](https://mts0.google.com/vt/data=9JDtAHjlTn3x-Sj-pwj3TI8qbtmqB_-LnEoOWHi1JIH9W7fJrfYPYf2ali6aD042Ny8SYFLwPPZZKXlfEZ4QdxIpwulW3ms6uP5wUAoVf93Jyw3RqOzuf7phyiJTNTa7F40NnNzgarXK_1t3AxD-WqBu5Go8Gincuj1Ho04og_3Sa2UiBghMZdgO5C25rkiQkreOKiiL1sBaWOqNe2jnAM4MI2IC)
+
 ---
 
 ## Usage
