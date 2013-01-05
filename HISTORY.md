@@ -10,6 +10,6 @@
 
 *December 11th 2012*
 
-- added automatic scheduling
-- simplified much code
-- added some Linux functionality **Not tested**
+- Added automatic scheduling
+- Simplified much code
+- Added some Linux functionality **Not tested**

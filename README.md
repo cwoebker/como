@@ -56,7 +56,7 @@ So go out there and hack some code!
 
 - Cross-Platform (Linux & Mac)
 - Automatically run with `cron`/`launchd` scheduling
-- Export data to `.csv` file
+- Export the data to `.csv` file
 - Simple Statistics
 - Histories for Cycles and Capacity
 
