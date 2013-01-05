@@ -3,7 +3,7 @@
 *January 6th*
 
 - Create settings for users to change (save time, and how often)
-- Import data from .csv file
+- Import data from .csv file **DONE**
 - use tablib consistently in saving etc. **DONE**
 
 *January 11th*

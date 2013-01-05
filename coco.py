@@ -26,6 +26,7 @@ from datetime import datetime, date
 import collections
 
 from clint.textui import puts, indent, colored
+
 if platform.system() == "Darwin":
     from os.path import expanduser
 elif platform.system() == "Linux":
@@ -228,12 +229,26 @@ def auto():
     <key>Program</key>
     <string>%s</string>
     <key>StartCalendarInterval</key>
-    <dict>
-      <key>Hour</key>
-      <integer>18</integer>
-      <key>Minute</key>
-      <integer>30</integer>
-    </dict>
+    <array>
+        <dict>
+          <key>Hour</key>
+          <integer>20</integer>
+          <key>Minute</key>
+          <integer>0</integer>
+        </dict>
+        <dict>
+          <key>Hour</key>
+          <integer>14</integer>
+          <key>Minute</key>
+          <integer>0</integer>
+        </dict>
+        <dict>
+          <key>Hour</key>
+          <integer>8</integer>
+          <key>Minute</key>
+          <integer>0</integer>
+        </dict>
+    </array>
 </dict>
 </plist>"""
     if platform.system() == "Darwin":

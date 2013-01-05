@@ -1,6 +1,6 @@
 # coco: batteries complete
 
-[`coco.py`](https://github.com/cwoebker/coco/blob/master/coco.py) is a minimalistic utillity to monitor and log battery health & more.
+[`coco`](https://github.com/cwoebker/coco/blob/master/coco.py) is a minimalistic utillity to monitor and log battery health & more.
 
 [![Status unavailable](https://secure.travis-ci.org/cwoebker/coco.png?branch=master)](http://travis-ci.org/cwoebker/coco)
 
@@ -16,13 +16,17 @@ Saves the current battery state.
 
 Prints information about battery and battery history.
 
-    coco save
+    coco import <file>
+
+Import statistics from .csv file (time, capacity, cycles)
+
+    coco export
 
 Saves data to `coco.csv` file to current directory.
 
     coco auto
 
-Turns scheduling on or off. (Every day at 18:30)
+Turns scheduling on or off. (Every day at 8am, 2pm and 8pm)
 
     coco reset
 
