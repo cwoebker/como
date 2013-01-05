@@ -57,7 +57,7 @@ def spark_print(ints):
 ##### Platform specific code #####
 
 if platform.system() == "Darwin":
-    def serial():
+    def age():
         serial = {}
         cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
         serial['number'] = subprocess.check_output(cmd, shell=True).translate(None, '\n')
@@ -66,7 +66,11 @@ if platform.system() == "Darwin":
             temp = temp.lstrip(code)
         serial['year'] = int(temp[0])
         serial['week'] = int(temp[1:3])
-        return serial
+
+        creation = str(date.today().year)[:-1] + str(serial['year']) + str(serial['week']) + "1"
+
+        timedelta = datetime.now() - datetime.strptime(creation, '%Y%W%w')
+        return timedelta.days / 30
 
     def battery():
         batList = subprocess.check_output('ioreg -w0 -l | grep Capacity', shell=True).translate(None, ' "|').split('\n')
@@ -124,17 +128,16 @@ def stats():
     puts("-" * (8 + len(title)))
 
     bat = battery()
-    # ser = serial()
 
     with indent(6, quote=colored.yellow('      ')):
-        #puts(colored.yellow("Current:"))
-        #with indent(4, quote=colored.yellow('    ')):
-        puts("Serial Number: %s" % bat['serial'])
+        puts("Battery Serial: %s" % bat['serial'])
+        puts("Age of Computer: %s months" % age())
         puts("Number of cycles: %s" % bat['cycles'])
         puts("Design Capacity: %s" % bat['designcap'])
         puts("Max Capacity: %s" % bat['maxcap'])
         puts("Capacity: %s" % bat['curcap'])
         if platform.system() == "Darwin":  # Mac OS only
+            puts("Mac model: %s" % subprocess.check_output("sysctl -n hw.model", shell=True).rstrip("\n"))
             puts("Temperature: %s ℃" % (int(bat['temp']) / 100.))
             puts("Voltage: %s" % bat['voltage'])
             puts("Amperage: %s" % bat['amperage'])
