@@ -24,6 +24,7 @@ import platform
 import json
 from datetime import datetime, date
 import collections
+import zlib
 
 from clint.textui import puts, indent, colored
 
@@ -118,13 +119,13 @@ def save():
             data = Dataset(headers=['time', 'capacity', 'cycles'])
             ### WATCH OUT: when directly importing through tablib header order got messed up...
             # http://stackoverflow.com/questions/10206905/how-to-convert-json-string-to-dictionary-and-save-order-in-keys
-            data.dict = json.loads(coco.read(), object_pairs_hook=collections.OrderedDict)  # this ensures right order
+            data.dict = json.loads(zlib.decompress(coco.read()), object_pairs_hook=collections.OrderedDict)  # this ensures right order
     data.append([datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                 bat['maxcap'],
                 bat['cycles'],
     ])
     with open(COCO_BATTERY_FILE, 'w') as coco:
-        coco.write(data.json)
+        coco.write(zlib.compress(data.json))
 
     puts(colored.white("battery info saved (%s)" % str(data['time'][-1])))
 
@@ -156,7 +157,7 @@ def stats():
             # Gathering data
             with open(COCO_BATTERY_FILE, 'r') as coco:
                 data = Dataset()
-                data.json = coco.read()
+                data.json = zlib.decompress(coco.read())
             puts(colored.yellow("Database:"))
             with indent(4, quote=colored.yellow('    ')):
                 puts("Number of Entries: %d" % len(data))
@@ -187,7 +188,7 @@ def export_csv():
     else:
         dataset = Dataset(headers=['time', 'capacity', 'cycles'])
         with open(COCO_BATTERY_FILE, 'r') as coco:
-            dataset.dict = json.loads(coco.read(), object_pairs_hook=collections.OrderedDict)
+            dataset.dict = json.loads(zlib.decompress(coco.read()), object_pairs_hook=collections.OrderedDict)
         with open("coco.csv", "w") as coco:
             coco.write(dataset.csv)
         puts(colored.white("saved file to current directory"))
@@ -200,7 +201,7 @@ def import_csv(path):
         data = []
     else:
         with open(COCO_BATTERY_FILE, 'r') as coco:
-            data = json.loads(coco.read(), object_pairs_hook=collections.OrderedDict)
+            data = json.loads(zlib.decompress(coco.read()), object_pairs_hook=collections.OrderedDict)
     with open(expanduser(path), "r") as f:
         csv = f.read()
     current_dataset = Dataset(headers=['time', 'capacity', 'cycles'])
@@ -219,7 +220,7 @@ def import_csv(path):
     new = current_dataset.stack(import_dataset).sort('time')
 
     with open(COCO_BATTERY_FILE, 'w') as coco:
-        coco.write(new.json)
+        coco.write(zlib.compress(new.json))
 
     puts(colored.white("battery statistics imported"))
 
