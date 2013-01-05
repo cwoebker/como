@@ -47,8 +47,8 @@ ticks = u'▁▂▃▅▆▇'
 
 def spark_string(ints):
     """Returns a spark string from given iterable of ints."""
-    step = ((max(ints)) / float(len(ticks) - 1)) or 1
-    return u''.join(ticks[int(round(i / step))] for i in ints)
+    step = ((max(i for i in ints if type(i) == int)) / float(len(ticks) - 1)) or 1
+    return u''.join(ticks[int(round(i / step))] if i != '-' else '.' for i in ints)
 
 
 def spark_print(ints):
@@ -170,8 +170,11 @@ def stats():
                 puts(colored.yellow("Cycles:"))
                 cycles = []
                 for element in data['cycles']:
-                    cycles.append(int(element))
-                spark_print([c - min(cycles) for c in cycles])
+                    if element == '-':
+                        cycles.append(element)
+                    else:
+                        cycles.append(int(element))
+                spark_print([c - min(c for c in cycles if type(c) == int) if c != '-' else c for c in cycles])
 
 
 def export_csv():
