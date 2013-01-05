@@ -206,7 +206,11 @@ def import_csv(path):
     import_dataset.csv = csv
     new_dict = []  # need to find a way to edit dataset itself, this is stupid
     for element in import_dataset.dict:
-        element['date'] += "T00:00:00"
+        #if 'T' not in element['date']:
+        try:
+            element['date'] += "T00:00:00"
+        except KeyError:
+            pass
         new_dict.append(element)
     import_dataset.dict = new_dict
     new = current_dataset.stack(import_dataset).sort('time')
