@@ -4,7 +4,9 @@
 
 [![Status unavailable](https://secure.travis-ci.org/cwoebker/como.png?branch=master)](http://travis-ci.org/cwoebker/como)
 
-## The Name ##
+---
+
+## Naming ##
 
 **Why como?**
 
@@ -13,7 +15,6 @@ and since he invented the battery I thought it would be a great name.
 
 ![Map not found](https://mts0.google.com/vt/data=9JDtAHjlTn3x-Sj-pwj3TI8qbtmqB_-LnEoOWHi1JIH9W7fJrfYPYf2ali6aD042Ny8SYFLwPPZZKXlfEZ4QdxIpwulW3ms6uP5wUAoVf93Jyw3RqOzuf7phyiJTNTa7F40NnNzgarXK_1t3AxD-WqBu5Go8Gincuj1Ho04og_3Sa2UiBghMZdgO5C25rkiQkreOKiiL1sBaWOqNe2jnAM4MI2IC)
 
----
 
 ## Usage
 
@@ -52,14 +53,14 @@ Shows the current version.
 
 ## Installation
 
-Installing como is **simple**:
+Installing `como` is **simple**:
 
     $ pip install como
 
 
 ## Advanced
 
-``como`` stores all battery information in the file ``~/.como``.
+``como`` stores all battery information (with zlib compression) in the file ``~/.como``.
 You are free to do whatever you want with the data in that file,
 its yours after all.
 
