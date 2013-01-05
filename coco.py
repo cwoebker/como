@@ -279,8 +279,13 @@ def auto():
 
 
 def reset():
-    os.remove(COCO_BATTERY_FILE)
-    puts(colored.white("cleared history"))
+    if os.path.exists(COCO_BATTERY_FILE):
+        sure = raw_input("Are you sure? this will remove everything! [yes/no] ")
+        if sure == "yes":
+            os.remove(COCO_BATTERY_FILE)
+            puts(colored.white("cleared history"))
+    else:
+        puts(colored.white("no coco database"))
 
 
 def run():
@@ -306,9 +311,7 @@ Options:
 """
     args = docopt(define, help=True, version=("coco v" + str(__version__)))
     if args["reset"]:
-        sure = raw_input("Are you sure? this will remove everything! [yes/no] ")
-        if sure == "yes":
-            reset()
+        reset()
     elif args["stats"]:
         stats()
     elif args["import"]:
