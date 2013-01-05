@@ -22,7 +22,8 @@ import os
 import subprocess
 import platform
 import json
-from datetime import datetime
+from datetime import datetime, date
+import collections
 
 from clint.textui import puts, indent, colored
 if platform.system() == "Darwin":
@@ -101,24 +102,28 @@ elif platform.system() == "Linux":
         return battery
 
 
-def main():
+def save():
     bat = battery()
 
     data = []
     if not os.path.exists(COCO_BATTERY_FILE):
         puts(colored.yellow("Creating ~/.coco"))
         open(COCO_BATTERY_FILE, 'w').close()
+        data = Dataset(headers=['time', 'capacity', 'cycles'])
     else:
         with open(COCO_BATTERY_FILE, 'r') as coco:
-            data = json.loads(coco.read())
-    data.append({'time': datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-                'maxcap': bat['maxcap'],
-                'cycles': bat['cycles'],
-    })
+            data = Dataset(headers=['time', 'capacity', 'cycles'])
+            ### WATCH OUT: when directly importing through tablib header order got messed up...
+            # http://stackoverflow.com/questions/10206905/how-to-convert-json-string-to-dictionary-and-save-order-in-keys
+            data.dict = json.loads(coco.read(), object_pairs_hook=collections.OrderedDict)  # this ensures right order
+    data.append([datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                bat['maxcap'],
+                bat['cycles'],
+    ])
     with open(COCO_BATTERY_FILE, 'w') as coco:
-        coco.write(json.dumps(data))
+        coco.write(data.json)
 
-    puts(colored.white("Battery Info saved. (%s)" % str(data[-1]['time'])))
+    puts(colored.white("battery info saved (%s)" % str(data['time'][-1])))
 
 
 def stats():
@@ -146,45 +151,66 @@ def stats():
         else:
             # Gathering data
             with open(COCO_BATTERY_FILE, 'r') as coco:
-                data = json.loads(coco.read())
+                data = Dataset()
+                data.json = coco.read()
             puts(colored.yellow("Database:"))
             with indent(4, quote=colored.yellow('    ')):
-                # puts("Creation Time: %s Year, %s Week" % (ser['year'], ser['week']))
                 puts("Number of Entries: %d" % len(data))
-                puts("First save: " + str(data[0]['time']))
-                puts("Last save: " + str(data[-1]['time']))
-                timedelta = datetime.now() - datetime.strptime(data[0]['time'], "%Y-%m-%dT%H:%M:%S")
+                puts("First save: " + str(data['time'][0]))
+                puts("Last save: " + str(data['time'][-1]))
+                timedelta = datetime.now() - datetime.strptime(data['time'][0], "%Y-%m-%dT%H:%M:%S")
                 puts("Age of Database: %s Days" % str(timedelta.days))
                 # History
                 puts(colored.yellow("History:"))
                 history = []
-                for element in data:
-                    history.append(int(element['maxcap']))
+                for element in data['capacity']:
+                    history.append(int(element))
                 spark_print([h - min(history) for h in history])
                 # Cycles
                 puts(colored.yellow("Cycles:"))
                 cycles = []
-                for element in data:
-                    cycles.append(int(element['cycles']))
+                for element in data['cycles']:
+                    cycles.append(int(element))
                 spark_print([c - min(cycles) for c in cycles])
 
 
-def save():
+def export_csv():
     if not os.path.exists(COCO_BATTERY_FILE):
         puts(colored.red("No coco database."))
     else:
+        dataset = Dataset(headers=['time', 'capacity', 'cycles'])
         with open(COCO_BATTERY_FILE, 'r') as coco:
-            data = json.loads(coco.read())
-        csv = Dataset()
-        for item in data:
-            csv.append(item.values())
-        csv.headers = ['Cycles', 'Capacity', 'Time']
+            dataset.dict = json.loads(coco.read(), object_pairs_hook=collections.OrderedDict)
         with open("coco.csv", "w") as coco:
-            coco.write(csv.csv)
+            coco.write(dataset.csv)
         puts(colored.white("saved file to current directory"))
 
 
-APPLE_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
+def import_csv():
+    if not os.path.exists(COCO_BATTERY_FILE):
+        puts(colored.yellow("Creating ~/.coco"))
+        open(COCO_BATTERY_FILE, 'w').close()
+    with open(COCO_BATTERY_FILE, 'r') as coco:
+        data = json.loads(coco.read(), object_pairs_hook=collections.OrderedDict)
+    with open("data.csv", "r") as f:
+        csv = f.read()
+    current_dataset = Dataset(headers=['time', 'capacity', 'cycles'])
+    current_dataset.dict = data
+    import_dataset = Dataset()
+    import_dataset.csv = csv
+    for i in xrange(len(import_dataset)):
+        import_dataset['date'][i] = import_dataset['date'][i] + "T00:00:00"
+    print import_dataset.json
+    new = current_dataset.stack(import_dataset).sort('time')
+
+    with open(COCO_BATTERY_FILE, 'w') as coco:
+        coco.write(new.json)
+
+    puts(colored.white("battery statistics imported"))
+
+
+def auto():
+    APPLE_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -205,9 +231,6 @@ APPLE_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
     </dict>
 </dict>
 </plist>"""
-
-
-def auto():
     if platform.system() == "Darwin":
         PLIST_PATH = expanduser("~/Library/LaunchAgents/com.cwoebker.coco.plist")
         if os.path.exists(PLIST_PATH):
@@ -250,7 +273,8 @@ Usage:
   coco
   coco reset
   coco stats
-  coco save
+  coco import <file>
+  coco export
   coco auto
   coco -h | --help
   coco --version
@@ -267,12 +291,14 @@ Options:
             reset()
     elif args["stats"]:
         stats()
-    elif args["save"]:
-        save()
+    elif args["import"]:
+        import_csv()
+    elif args["export"]:
+        export_csv()
     elif args["auto"]:
         auto()
     else:
-        main()
+        save()
 
 if __name__ == "__main__":
     run()
