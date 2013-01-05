@@ -3,7 +3,7 @@
 """
 A minimalistic utility to monitor and log battery health & more.
 
-Homepage and documentation: github.com/cwoebker/coco
+Homepage and documentation: github.com/cwoebker/como
 
 Copyright (c) 2012, Cecil Woebker.
 License: BSD (see LICENSE for details)
@@ -36,7 +36,7 @@ from tablib import Dataset
 
 NO_DATABASE = 11
 
-COCO_BATTERY_FILE = os.path.expanduser('~/.coco')
+COMO_BATTERY_FILE = os.path.expanduser('~/.como')
 
 locationCodes = ['1C', '2Z', '4H', '5K', '8H', '5D', '7J', 'CK', 'E', 'EE',
 'F', 'FC', 'G8', 'GQ', 'PT', 'CY', 'QT', 'QP', 'RN', 'RM',
@@ -110,29 +110,29 @@ def save():
     bat = battery()
 
     data = []
-    if not os.path.exists(COCO_BATTERY_FILE):
-        puts(colored.yellow("Creating ~/.coco"))
-        open(COCO_BATTERY_FILE, 'w').close()
+    if not os.path.exists(COMO_BATTERY_FILE):
+        puts(colored.yellow("Creating ~/.como"))
+        open(COMO_BATTERY_FILE, 'w').close()
         data = Dataset(headers=['time', 'capacity', 'cycles'])
     else:
-        with open(COCO_BATTERY_FILE, 'r') as coco:
+        with open(COMO_BATTERY_FILE, 'r') as como:
             data = Dataset(headers=['time', 'capacity', 'cycles'])
             ### WATCH OUT: when directly importing through tablib header order got messed up...
             # http://stackoverflow.com/questions/10206905/how-to-convert-json-string-to-dictionary-and-save-order-in-keys
-            data.dict = json.loads(zlib.decompress(coco.read()), object_pairs_hook=collections.OrderedDict)  # this ensures right order
+            data.dict = json.loads(zlib.decompress(como.read()), object_pairs_hook=collections.OrderedDict)  # this ensures right order
     data.append([datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
                 bat['maxcap'],
                 bat['cycles'],
     ])
-    with open(COCO_BATTERY_FILE, 'w') as coco:
-        coco.write(zlib.compress(data.json))
+    with open(COMO_BATTERY_FILE, 'w') as como:
+        como.write(zlib.compress(data.json))
 
     puts(colored.white("battery info saved (%s)" % str(data['time'][-1])))
 
 
 def stats():
     with indent(4):
-        title = "Coco Statistics"
+        title = "Como Statistics"
         puts(colored.green(title))
     puts("-" * (8 + len(title)))
 
@@ -151,13 +151,13 @@ def stats():
             puts("Voltage: %s" % bat['voltage'])
             puts("Amperage: %s" % bat['amperage'])
             puts("Wattage: %s" % (bat['voltage'] * bat['amperage'] / 1000000.))
-        if not os.path.exists(COCO_BATTERY_FILE):
-            puts(colored.red("No coco database."))
+        if not os.path.exists(COMO_BATTERY_FILE):
+            puts(colored.red("No como database."))
         else:
             # Gathering data
-            with open(COCO_BATTERY_FILE, 'r') as coco:
+            with open(COMO_BATTERY_FILE, 'r') as como:
                 data = Dataset()
-                data.json = zlib.decompress(coco.read())
+                data.json = zlib.decompress(como.read())
             puts(colored.yellow("Database:"))
             with indent(4, quote=colored.yellow('    ')):
                 puts("Number of Entries: %d" % len(data))
@@ -183,25 +183,25 @@ def stats():
 
 
 def export_csv():
-    if not os.path.exists(COCO_BATTERY_FILE):
-        puts(colored.red("No coco database."))
+    if not os.path.exists(COMO_BATTERY_FILE):
+        puts(colored.red("No como database."))
     else:
         dataset = Dataset(headers=['time', 'capacity', 'cycles'])
-        with open(COCO_BATTERY_FILE, 'r') as coco:
-            dataset.dict = json.loads(zlib.decompress(coco.read()), object_pairs_hook=collections.OrderedDict)
-        with open("coco.csv", "w") as coco:
-            coco.write(dataset.csv)
+        with open(COMO_BATTERY_FILE, 'r') as como:
+            dataset.dict = json.loads(zlib.decompress(como.read()), object_pairs_hook=collections.OrderedDict)
+        with open("como.csv", "w") as como:
+            como.write(dataset.csv)
         puts(colored.white("saved file to current directory"))
 
 
 def import_csv(path):
-    if not os.path.exists(COCO_BATTERY_FILE):
-        puts(colored.yellow("Creating ~/.coco"))
-        open(COCO_BATTERY_FILE, 'w').close()
+    if not os.path.exists(COMO_BATTERY_FILE):
+        puts(colored.yellow("Creating ~/.como"))
+        open(COMO_BATTERY_FILE, 'w').close()
         data = []
     else:
-        with open(COCO_BATTERY_FILE, 'r') as coco:
-            data = json.loads(zlib.decompress(coco.read()), object_pairs_hook=collections.OrderedDict)
+        with open(COMO_BATTERY_FILE, 'r') as como:
+            data = json.loads(zlib.decompress(como.read()), object_pairs_hook=collections.OrderedDict)
     with open(expanduser(path), "r") as f:
         csv = f.read()
     current_dataset = Dataset(headers=['time', 'capacity', 'cycles'])
@@ -219,8 +219,8 @@ def import_csv(path):
     import_dataset.dict = new_dict
     new = current_dataset.stack(import_dataset).sort('time')
 
-    with open(COCO_BATTERY_FILE, 'w') as coco:
-        coco.write(zlib.compress(new.json))
+    with open(COMO_BATTERY_FILE, 'w') as como:
+        como.write(zlib.compress(new.json))
 
     puts(colored.white("battery statistics imported"))
 
@@ -231,7 +231,7 @@ def auto():
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.cwoebker.coco</string>
+    <string>com.cwoebker.como</string>
     <key>OnDemand</key>
     <true/>
     <key>RunAtLoad</key>
@@ -262,64 +262,64 @@ def auto():
 </dict>
 </plist>"""
     if platform.system() == "Darwin":
-        PLIST_PATH = expanduser("~/Library/LaunchAgents/com.cwoebker.coco.plist")
+        PLIST_PATH = expanduser("~/Library/LaunchAgents/com.cwoebker.como.plist")
         if os.path.exists(PLIST_PATH):
             os.system("launchctl unload %s" % PLIST_PATH)
             os.remove(PLIST_PATH)
-            puts(colored.white("coco will only run manually"))
+            puts(colored.white("como will only run manually"))
         else:
             with open(PLIST_PATH, "w") as f:
-                f.write(APPLE_PLIST % os.popen('which coco').read().rstrip('\n'))
+                f.write(APPLE_PLIST % os.popen('which como').read().rstrip('\n'))
             os.system("launchctl load %s" % PLIST_PATH)
-            puts(colored.white("coco will run automatically"))
+            puts(colored.white("como will run automatically"))
     elif platform.system() == "Linux":
         user_cron = CronTab()
         user_cron.read()
-        if len(user_cron.find_command("coco")) > 0:
-            user_cron.remove_all("coco")
-            user_cron.write()
-            puts(colored.white("coco will only run manually"))
+        if len(user_cron.find_command("como")) > 0:
+            user_cron.remove_all("como")
+            user_cron.writcoe()
+            puts(colored.white("como will only run manually"))
         else:
-            job = user_cron.new(command="coco")
+            job = user_cron.new(command="como")
             job.minute.every(2)
             #job.minute.on(0)
             #job.hour.on(19)
             user_cron.write()
-            puts(colored.white("coco will run automatically"))
+            puts(colored.white("como will run automatically"))
 
 
 def reset():
-    if os.path.exists(COCO_BATTERY_FILE):
+    if os.path.exists(COMO_BATTERY_FILE):
         sure = raw_input("Are you sure? this will remove everything! [yes/no] ")
         if sure == "yes":
-            os.remove(COCO_BATTERY_FILE)
+            os.remove(COMO_BATTERY_FILE)
             puts(colored.white("cleared history"))
     else:
-        puts(colored.white("no coco database"))
+        puts(colored.white("no como database"))
 
 
 def run():
     if platform.system() not in ['Darwin', 'Linux']:
         puts(colored.red("Operating System not supported."), stream=sys.stderr.write)
         return 1
-    define = """coco.
+    define = """como.
 
 Usage:
-  coco
-  coco reset
-  coco stats
-  coco import <file>
-  coco export
-  coco auto
-  coco -h | --help
-  coco --version
+  como
+  como reset
+  como stats
+  como import <file>
+  como export
+  como auto
+  como -h | --help
+  como --version
 
 Options:
   -h, --help
   --version
 
 """
-    args = docopt(define, help=True, version=("coco v" + str(__version__)))
+    args = docopt(define, help=True, version=("como v" + str(__version__)))
     if args["reset"]:
         reset()
     elif args["stats"]:

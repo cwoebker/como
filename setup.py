@@ -6,9 +6,9 @@ try:
 except ImportError:
     from distutils.core import setup
 
-import coco
+import como
 
-APP_NAME = 'coco'
+APP_NAME = 'como'
 
 
 # Grab requirments.
@@ -19,20 +19,20 @@ tests_require = ['nose']
 
 setup(
     name=APP_NAME,
-    version=coco.__version__,
+    version=como.__version__,
     description='battery health & more',
-    long_description=coco.__doc__,
-    author=coco.__author__,
+    long_description=como.__doc__,
+    author=como.__author__,
     author_email='me@cwoebker.com',
-    url='https://github.com/cwoebker/coco',
+    url='https://github.com/cwoebker/como',
     packages=find_packages(),
     include_package_data=True,
     install_requires=require,
     extras_requires={},
     tests_require=tests_require,
     test_suite='nose.collector',
-    #py_modules=['coco'],
-    scripts=['coco.py'],
+    #py_modules=['como'],
+    scripts=['como.py'],
     classifiers=(
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
@@ -46,7 +46,7 @@ setup(
     ),
     entry_points={
         'console_scripts': [
-            'coco = coco:run',
+            'como = como:run',
         ],
     },
     zip_safe=False,
