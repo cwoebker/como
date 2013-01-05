@@ -198,9 +198,11 @@ def import_csv():
     current_dataset.dict = data
     import_dataset = Dataset()
     import_dataset.csv = csv
-    for i in xrange(len(import_dataset)):
-        import_dataset['date'][i] = import_dataset['date'][i] + "T00:00:00"
-    print import_dataset.json
+    new_dict = []  # need to find a way to edit dataset itself, this is stupid
+    for element in import_dataset.dict:
+        element['date'] += "T00:00:00"
+        new_dict.append(element)
+    import_dataset.dict = new_dict
     new = current_dataset.stack(import_dataset).sort('time')
 
     with open(COCO_BATTERY_FILE, 'w') as coco:
