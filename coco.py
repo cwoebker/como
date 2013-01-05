@@ -190,13 +190,15 @@ def export_csv():
         puts(colored.white("saved file to current directory"))
 
 
-def import_csv():
+def import_csv(path):
     if not os.path.exists(COCO_BATTERY_FILE):
         puts(colored.yellow("Creating ~/.coco"))
         open(COCO_BATTERY_FILE, 'w').close()
-    with open(COCO_BATTERY_FILE, 'r') as coco:
-        data = json.loads(coco.read(), object_pairs_hook=collections.OrderedDict)
-    with open("data.csv", "r") as f:
+        data = []
+    else:
+        with open(COCO_BATTERY_FILE, 'r') as coco:
+            data = json.loads(coco.read(), object_pairs_hook=collections.OrderedDict)
+    with open(expanduser(path), "r") as f:
         csv = f.read()
     current_dataset = Dataset(headers=['time', 'capacity', 'cycles'])
     current_dataset.dict = data
@@ -315,7 +317,7 @@ Options:
     elif args["stats"]:
         stats()
     elif args["import"]:
-        import_csv()
+        import_csv(args["<file>"])
     elif args["export"]:
         export_csv()
     elif args["auto"]:
