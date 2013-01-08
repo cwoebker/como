@@ -77,7 +77,7 @@ So go out there and hack some code!
 
 ## Contribute
 
-Fork and contribute!
+[Fork and contribute!](http://github.com/cwoebker/como)
 
 ---
 

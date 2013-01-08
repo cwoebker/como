@@ -26,6 +26,8 @@ from datetime import datetime, date
 import collections
 import zlib
 
+import requests
+
 from clint.textui import puts, indent, colored
 
 if platform.system() == "Darwin":
@@ -36,6 +38,9 @@ from tablib import Dataset
 
 NO_DATABASE = 11
 
+DEV_URL = 'http://127.0.0.1:5000'
+REAL_URL = 'http://cw-como.herokuapp.com'
+SERVER_URL = REAL_URL
 COMO_BATTERY_FILE = os.path.expanduser('~/.como')
 
 locationCodes = ['1C', '2Z', '4H', '5K', '8H', '5D', '7J', 'CK', 'E', 'EE',
@@ -225,6 +230,26 @@ def import_csv(path):
     puts(colored.white("battery statistics imported"))
 
 
+def upload():
+    UPLOAD_URL = SERVER_URL + "/upload"
+    cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
+    computer_serial = subprocess.check_output(cmd, shell=True).translate(None, '\n')
+    bat = battery()
+    model = subprocess.check_output("sysctl -n hw.model", shell=True).rstrip("\n")
+    data = {'computer': computer_serial, 'model': model, 'battery': bat['serial'], 'design': bat['designcap']}
+    files = {'como': open(expanduser("~/.como"), 'rb')}
+    r = requests.post(UPLOAD_URL, files=files, data=data)
+    if r.status_code == requests.codes.ok:
+        puts("data uploaded")
+    else:
+        puts("upload failed")
+
+
+def open_page():
+    cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
+    os.system("open %s/battery/%s" % (SERVER_URL, subprocess.check_output(cmd, shell=True).translate(None, '\n')))
+
+
 def auto():
     APPLE_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -310,6 +335,8 @@ Usage:
   como stats
   como import <file>
   como export
+  como upload
+  como open
   como auto
   como -h | --help
   como --version
@@ -328,6 +355,10 @@ Options:
         import_csv(args["<file>"])
     elif args["export"]:
         export_csv()
+    elif args["upload"]:
+        upload()
+    elif args["open"]:
+        open_page()
     elif args["auto"]:
         auto()
     else:
