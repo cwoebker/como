@@ -250,6 +250,55 @@ def open_page():
     os.system("open %s/battery/%s" % (SERVER_URL, subprocess.check_output(cmd, shell=True).translate(None, '\n')))
 
 
+def auto_upload():
+    APPLE_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.cwoebker.como-update</string>
+    <key>OnDemand</key>
+    <true/>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>Program</key>
+    <string>%s upload</string>
+    <key>StartCalendarInterval</key>
+    <dict>
+      <key>Hour</key>
+      <integer>11</integer>
+      <key>Minute</key>
+      <integer>0</integer>
+    </dict>
+</dict>
+</plist>"""
+    if platform.system() == "Darwin":
+        PLIST_PATH = expanduser("~/Library/LaunchAgents/com.cwoebker.como-update.plist")
+        if os.path.exists(PLIST_PATH):
+            os.system("launchctl unload %s" % PLIST_PATH)
+            os.remove(PLIST_PATH)
+            puts(colored.white("como will not upload data"))
+        else:
+            with open(PLIST_PATH, "w") as f:
+                f.write(APPLE_PLIST % os.popen('which como').read().rstrip('\n'))
+            os.system("launchctl load %s" % PLIST_PATH)
+            puts(colored.white("como will automatically upload the data"))
+    elif platform.system() == "Linux":
+        user_cron = CronTab()
+        user_cron.read()
+        if len(user_cron.find_command("como-update")) > 0:
+            user_cron.remove_all("como-update")
+            user_cron.write()
+            puts(colored.white("como will not upload data"))
+        else:
+            job = user_cron.new(command="como-update")
+            job.minute.every(2)
+            #job.minute.on(0)
+            #job.hour.on(19)
+            user_cron.write()
+            puts(colored.white("como will automatically upload the data"))
+
+
 def auto():
     APPLE_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -338,6 +387,7 @@ Usage:
   como upload
   como open
   como auto
+  como auto upload
   como -h | --help
   como --version
 
@@ -349,6 +399,11 @@ Options:
     args = docopt(define, help=True, version=("como v" + str(__version__)))
     if args["reset"]:
         reset()
+    elif args["auto"]:
+        if args["upload"]:
+            auto_upload()
+        else:
+            auto()
     elif args["stats"]:
         stats()
     elif args["import"]:
@@ -359,8 +414,6 @@ Options:
         upload()
     elif args["open"]:
         open_page()
-    elif args["auto"]:
-        auto()
     else:
         save()
 
