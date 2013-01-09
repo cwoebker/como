@@ -77,7 +77,7 @@ if platform.system() == "Darwin":
 
         creation = str(date.today().year)[:-1] + str(serial['year']) + str(serial['week']) + "1"
 
-        timedelta = datetime.now() - datetime.strptime(creation, '%Y%W%w')
+        timedelta = datetime.utcnow() - datetime.strptime(creation, '%Y%W%w')
         return timedelta.days / 30
 
     def battery():
@@ -125,7 +125,7 @@ def save():
             ### WATCH OUT: when directly importing through tablib header order got messed up...
             # http://stackoverflow.com/questions/10206905/how-to-convert-json-string-to-dictionary-and-save-order-in-keys
             data.dict = json.loads(zlib.decompress(como.read()), object_pairs_hook=collections.OrderedDict)  # this ensures right order
-    data.append([datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+    data.append([datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),
                 bat['maxcap'],
                 bat['cycles'],
     ])
@@ -168,7 +168,7 @@ def stats():
                 puts("Number of Entries: %d" % len(data))
                 puts("First save: " + str(data['time'][0]))
                 puts("Last save: " + str(data['time'][-1]))
-                timedelta = datetime.now() - datetime.strptime(data['time'][0], "%Y-%m-%dT%H:%M:%S")
+                timedelta = datetime.utcnow() - datetime.strptime(data['time'][0], "%Y-%m-%dT%H:%M:%S")
                 puts("Age of Database: %s Days" % str(timedelta.days))
                 # History
                 puts(colored.yellow("History:"))
