@@ -39,7 +39,7 @@ from tablib import Dataset
 NO_DATABASE = 11
 
 DEV_URL = 'http://127.0.0.1:5000'
-REAL_URL = 'http://cw-como.herokuapp.com'
+REAL_URL = 'http://como.cwoebker.com'
 SERVER_URL = REAL_URL
 COMO_BATTERY_FILE = os.path.expanduser('~/.como')
 
