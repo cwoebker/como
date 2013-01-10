@@ -1,5 +1,14 @@
 # History #
 
+## 0.4.5 ##
+
+*January 10th 2013*
+
+- data is now stored with zlib compression
+- upload to web app **BETA**
+    - check on battery (como.cwoebker.com)
+    - see health status and more
+
 ## 0.4.0 ##
 
 *January 5th 2013*

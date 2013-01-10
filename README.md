@@ -34,9 +34,21 @@ Import statistics from .csv file (time, capacity, cycles)
 
 Saves data to `como.csv` file to current directory.
 
+    como upload
+
+Uploads data to server.
+
+    como open
+
+Opens personal battery information page.
+
     como auto
 
 Turns scheduling on or off. (Every day at 8am, 2pm and 8pm)
+
+    como auto upload
+
+Turns auto-upload on or off. (Every day at 11am)
 
     como reset
 
@@ -74,6 +86,7 @@ So go out there and hack some code!
 - Import data from `.csv` file
 - Simple Statistics
 - Histories for Cycles and Capacity
+- Upload Data to server
 
 ## Contribute
 
