@@ -231,18 +231,21 @@ def import_csv(path):
 
 
 def upload():
-    UPLOAD_URL = SERVER_URL + "/upload"
-    cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
-    computer_serial = subprocess.check_output(cmd, shell=True).translate(None, '\n')
-    bat = battery()
-    model = subprocess.check_output("sysctl -n hw.model", shell=True).rstrip("\n")
-    data = {'computer': computer_serial, 'model': model, 'battery': bat['serial'], 'design': bat['designcap']}
-    files = {'como': open(expanduser("~/.como"), 'rb')}
-    r = requests.post(UPLOAD_URL, files=files, data=data)
-    if r.status_code == requests.codes.ok:
-        puts("data uploaded")
+    if platform.system() == "Darwin":
+        UPLOAD_URL = SERVER_URL + "/upload"
+        cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
+        computer_serial = subprocess.check_output(cmd, shell=True).translate(None, '\n')
+        bat = battery()
+        model = subprocess.check_output("sysctl -n hw.model", shell=True).rstrip("\n")
+        data = {'computer': computer_serial, 'model': model, 'battery': bat['serial'], 'design': bat['designcap'], 'age': age()}
+        files = {'como': open(expanduser("~/.como"), 'rb')}
+        r = requests.post(UPLOAD_URL, files=files, data=data)
+        if r.status_code == requests.codes.ok:
+            puts("data uploaded")
+        else:
+            puts("upload failed")
     else:
-        puts("upload failed")
+        puts("no uploading on this operating system")
 
 
 def open_page():
