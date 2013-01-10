@@ -5,7 +5,7 @@
 *January 10th 2013*
 
 - data is now stored with zlib compression
-- upload to web app **BETA**
+- upload to web app - **BETA**
     - check on battery (como.cwoebker.com)
     - see health status and more
 

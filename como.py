@@ -264,8 +264,11 @@ def auto_upload():
     <true/>
     <key>RunAtLoad</key>
     <false/>
-    <key>Program</key>
-    <string>%s upload</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>%s</string>
+        <string>upload</string>
+    </array>
     <key>StartCalendarInterval</key>
     <dict>
       <key>Hour</key>
