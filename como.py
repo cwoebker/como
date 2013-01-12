@@ -5,7 +5,7 @@ A minimalistic utility to monitor and log battery health & more.
 
 Homepage and documentation: github.com/cwoebker/como
 
-Copyright (c) 2012, Cecil Woebker.
+Copyright (c) 2013, Cecil Woebker.
 License: BSD (see LICENSE for details)
 """
 
@@ -66,7 +66,6 @@ def spark_print(ints):
     puts(spark_string(ints).encode('utf-8'))
 
 ##### Platform specific code #####
-
 def age():
     serial = {}
     cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
@@ -81,6 +80,7 @@ def age():
 
     timedelta = datetime.utcnow() - datetime.strptime(creation, '%Y%W%w')
     return timedelta.days / 30
+
 
 def battery():
     if platform.system() == "Darwin":
@@ -418,10 +418,11 @@ Usage:
   como stats
   como import <file>
   como export
-  como upload
-  como open
+  como [-d|--dev] upload
+  como [-d|--dev] open
   como auto
   como auto upload
+  como -d | --dev
   como -h | --help
   como --version
 
@@ -431,6 +432,9 @@ Options:
 
 """
     args = docopt(define, help=True, version=("como v" + str(__version__)))
+    if args["--dev"] or args["-d"]:
+        global SERVER_URL
+        SERVER_URL = DEV_URL
     if args["reset"]:
         reset()
     elif args["auto"]:
