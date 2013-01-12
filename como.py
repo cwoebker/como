@@ -43,19 +43,22 @@ REAL_URL = 'http://como.cwoebker.com'
 SERVER_URL = REAL_URL
 COMO_BATTERY_FILE = os.path.expanduser('~/.como')
 
-locationCodes = ['1C', '2Z', '4H', '5K', '8H', '5D', '7J', 'CK', 'E', 'EE',
-'F', 'FC', 'G8', 'GQ', 'PT', 'CY', 'QT', 'QP', 'RN', 'RM',
-'SG', 'UV', 'U2', 'V7', 'VM', 'W8', 'WQ', 'XA', 'XB', 'YM']
+LOCATION_CODES = [
+    '1C', '2Z', '4H', '5K', '8H', '5D', '7J', 'CK', 'E', 'EE',
+    'F', 'FC', 'G8', 'GQ', 'PT', 'CY', 'QT', 'QP', 'RN', 'RM',
+    'SG', 'UV', 'U2', 'V7', 'VM', 'W8', 'WQ', 'XA', 'XB', 'YM'
+]
 
-### www.github.com/kennethreitz/spark.py - this code is taken from kennethreitz python port of holman's original spark
+# www.github.com/kennethreitz/spark.py - this code is taken from kennethreitz
+# python port of holman's original spark
 
-ticks = u'▁▂▃▅▆▇'
+TICKS = u'▁▂▃▅▆▇'
 
 
 def spark_string(ints):
     """Returns a spark string from given iterable of ints."""
-    step = ((max(i for i in ints if type(i) == int)) / float(len(ticks) - 1)) or 1
-    return u''.join(ticks[int(round(i / step))] if type(i) == int else '.' for i in ints)
+    step = ((max(i for i in ints if type(i) == int)) / float(len(TICKS) - 1)) or 1
+    return u''.join(TICKS[int(round(i / step))] if type(i) == int else '.' for i in ints)
 
 
 def spark_print(ints):
@@ -64,50 +67,63 @@ def spark_print(ints):
 
 ##### Platform specific code #####
 
-if platform.system() == "Darwin":
-    def age():
-        serial = {}
-        cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
-        serial['number'] = subprocess.check_output(cmd, shell=True).translate(None, '\n')
-        temp = serial['number']
-        for code in locationCodes:
-            temp = temp.lstrip(code)
-        serial['year'] = int(temp[0])
-        serial['week'] = int(temp[1:3])
+def age():
+    serial = {}
+    cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
+    serial['number'] = subprocess.check_output(cmd, shell=True).translate(None, '\n')
+    temp = serial['number']
+    for code in LOCATION_CODES:
+        temp = temp.lstrip(code)
+    serial['year'] = int(temp[0])
+    serial['week'] = int(temp[1:3])
 
-        creation = str(date.today().year)[:-1] + str(serial['year']) + str(serial['week']) + "1"
+    creation = str(date.today().year)[:-1] + str(serial['year']) + str(serial['week']) + "1"
 
-        timedelta = datetime.utcnow() - datetime.strptime(creation, '%Y%W%w')
-        return timedelta.days / 30
+    timedelta = datetime.utcnow() - datetime.strptime(creation, '%Y%W%w')
+    return timedelta.days / 30
 
-    def battery():
-        batList = subprocess.check_output('ioreg -w0 -l | grep Capacity', shell=True).translate(None, ' "|').split('\n')
-        temp = subprocess.check_output('ioreg -w0 -l | grep Temperature', shell=True).translate(None, '\n "|').lstrip('Temperature=')
+def battery():
+    if platform.system() == "Darwin":
+        bat = subprocess.check_output('ioreg -w0 -l | grep Capacity', shell=True).translate(None, ' "|').split('\n')
         battery = {}
         battery['serial'] = subprocess.check_output('ioreg -w0 -l | grep BatterySerialNumber', shell=True).translate(None, '\n "|').lstrip('BatterySerialNumber=')
-        battery['temp'] = int(temp)
-        battery['maxcap'] = int(batList[0].lstrip('MaxCapacity='))
-        battery['curcap'] = int(batList[1].lstrip('CurrentCapacity='))
-        battery['legacy'] = batList[2].lstrip('LegacyBatteryInfo=')
+        battery['temp'] = int(subprocess.check_output('ioreg -w0 -l | grep Temperature', shell=True).translate(None, '\n "|').lstrip('Temperature='))
+        battery['maxcap'] = int(bat[0].lstrip('MaxCapacity='))
+        battery['curcap'] = int(bat[1].lstrip('CurrentCapacity='))
+        battery['legacy'] = bat[2].lstrip('LegacyBatteryInfo=')
         battery['cycles'] = int(battery['legacy'].translate(None, '{}=').split(',')[5].lstrip('CycleCount'))
         battery['amperage'] = int(battery['legacy'].translate(None, '{}=').split(',')[0].lstrip('Amperage'))
         if battery['amperage'] > 999999:
             battery['amperage'] -= 18446744073709551615
         battery['voltage'] = int(battery['legacy'].translate(None, '{}=').split(',')[4].lstrip('Voltage'))
-        battery['designcap'] = int(batList[3].lstrip('DesignCapacity='))
+        battery['designcap'] = int(bat[3].lstrip('DesignCapacity='))
         return battery
-
-elif platform.system() == "Linux":
-    def battery():
+    elif platform.system() == "Linux":
         battery = {}
-        battery['serial'] = subprocess.check_output("grep \"^serial number\" /proc/acpi/battery/BAT0/info | awk '{ print $3 }'", shell=True).translate(None, '\n')
-
-        battery['state'] = subprocess.check_output("grep \"^charging state\" /proc/acpi/battery/BAT0/state | awk '{ print $3 }'", shell=True)
-        battery['maxcap'] = float(subprocess.check_output("grep \"^last full capacity\" /proc/acpi/battery/BAT0/info | awk '{ print $4 }'", shell=True))
-        battery['curcap'] = float(subprocess.check_output("grep \"^remaining capacity\" /proc/acpi/battery/BAT0/state | awk '{ print $3 }'", shell=True))
-        battery['designcap'] = float(subprocess.check_output("grep \"^design capacity:\" /proc/acpi/battery/BAT0/info | awk '{ print $3 }'", shell=True))
-
-        battery['cycles'] = int(subprocess.check_output("grep \"^cycle count\" /proc/acpi/battery/BAT0/info", shell=True).lstrip("cycle count:").translate(None, ' '))
+        battery['serial'] = subprocess.check_output(
+            "grep \"^serial number\" /proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
+            shell=True
+        ).translate(None, '\n')
+        battery['state'] = subprocess.check_output(
+            "grep \"^charging state\" /proc/acpi/battery/BAT0/state | awk '{ print $3 }'",
+            shell=True
+        )
+        battery['maxcap'] = float(subprocess.check_output(
+            "grep \"^last full capacity\" /proc/acpi/battery/BAT0/info | awk '{ print $4 }'",
+            shell=True
+        ))
+        battery['curcap'] = float(subprocess.check_output(
+            "grep \"^remaining capacity\" /proc/acpi/battery/BAT0/state | awk '{ print $3 }'",
+            shell=True
+        ))
+        battery['designcap'] = float(subprocess.check_output(
+            "grep \"^design capacity:\" /proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
+            shell=True
+        ))
+        battery['cycles'] = int(subprocess.check_output(
+            "grep \"^cycle count\" /proc/acpi/battery/BAT0/info",
+            shell=True
+        ).lstrip("cycle count:").translate(None, ' '))
         return battery
 
 
@@ -122,12 +138,15 @@ def save():
     else:
         with open(COMO_BATTERY_FILE, 'r') as como:
             data = Dataset(headers=['time', 'capacity', 'cycles'])
-            ### WATCH OUT: when directly importing through tablib header order got messed up...
-            # http://stackoverflow.com/questions/10206905/how-to-convert-json-string-to-dictionary-and-save-order-in-keys
+            ### WATCH OUT: when directly importing through tablib header order
+            #got messed up...
+            # http://stackoverflow.com/questions/10206905/
+            # how-to-convert-json-string-to-dictionary-and-save-order-in-keys
             data.dict = json.loads(zlib.decompress(como.read()), object_pairs_hook=collections.OrderedDict)  # this ensures right order
-    data.append([datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),
-                bat['maxcap'],
-                bat['cycles'],
+    data.append([
+        datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),
+        bat['maxcap'],
+        bat['cycles'],
     ])
     with open(COMO_BATTERY_FILE, 'w') as como:
         como.write(zlib.compress(data.json))
@@ -168,7 +187,8 @@ def stats():
                 puts("Number of Entries: %d" % len(data))
                 puts("First save: " + str(data['time'][0]))
                 puts("Last save: " + str(data['time'][-1]))
-                timedelta = datetime.utcnow() - datetime.strptime(data['time'][0], "%Y-%m-%dT%H:%M:%S")
+                timedelta = datetime.utcnow() - datetime.strptime(
+                    data['time'][0], "%Y-%m-%dT%H:%M:%S")
                 puts("Age of Database: %s Days" % str(timedelta.days))
                 # History
                 puts(colored.yellow("History:"))
@@ -239,7 +259,13 @@ def upload():
         computer_serial = subprocess.check_output(cmd, shell=True).translate(None, '\n')
         bat = battery()
         model = subprocess.check_output("sysctl -n hw.model", shell=True).rstrip("\n")
-        data = {'computer': computer_serial, 'model': model, 'battery': bat['serial'], 'design': bat['designcap'], 'age': age()}
+        data = {
+            'computer': computer_serial,
+            'model': model,
+            'battery': bat['serial'],
+            'design': bat['designcap'],
+            'age': age()
+        }
         files = {'como': open(expanduser("~/.como"), 'rb')}
         r = requests.post(UPLOAD_URL, files=files, data=data)
         if r.status_code == requests.codes.ok:
