@@ -55,7 +55,7 @@ ticks = u'▁▂▃▅▆▇'
 def spark_string(ints):
     """Returns a spark string from given iterable of ints."""
     step = ((max(i for i in ints if type(i) == int)) / float(len(ticks) - 1)) or 1
-    return u''.join(ticks[int(round(i / step))] if i != '-' else '.' for i in ints)
+    return u''.join(ticks[int(round(i / step))] if type(i) == int else '.' for i in ints)
 
 
 def spark_print(ints):
@@ -180,11 +180,11 @@ def stats():
                 puts(colored.yellow("Cycles:"))
                 cycles = []
                 for element in data['cycles']:
-                    if element == '-':
-                        cycles.append(element)
-                    else:
+                    if element:
                         cycles.append(int(element))
-                spark_print([c - min(c for c in cycles if type(c) == int) if c != '-' else c for c in cycles])
+                    else:
+                        cycles.append(element)
+                spark_print([c - min(c for c in cycles if type(c) == int) if type(c) == int else c for c in cycles])
 
 
 def export_csv():
@@ -196,7 +196,7 @@ def export_csv():
             dataset.dict = json.loads(zlib.decompress(como.read()), object_pairs_hook=collections.OrderedDict)
         with open("como.csv", "w") as como:
             como.write(dataset.csv)
-        puts(colored.white("saved file to current directory"))
+        puts("saved file to current directory")
 
 
 def import_csv(path):
@@ -218,8 +218,10 @@ def import_csv(path):
         #if 'T' not in element['date']:
         try:
             element['date'] += "T00:00:00"
+            element['loadcycles'] = None if element['loadcycles'] == '-' else int(element['loadcycles'])
         except KeyError:
-            pass
+            element['cycles'] = None if element['cycles'] == '-' else int(element['cycles'])
+        element['capacity'] = int(element['capacity'])
         new_dict.append(element)
     import_dataset.dict = new_dict
     new = current_dataset.stack(import_dataset).sort('time')
