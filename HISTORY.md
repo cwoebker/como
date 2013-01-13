@@ -1,5 +1,13 @@
 # History #
 
+## 0.4.6 ## ##
+
+*January 12th 2013*
+
+- fixed auto uploading
+- improved code for pep8 guidelines
+- (-d) or (--dev) option to use local development server
+
 ## 0.4.5 ##
 
 *January 10th 2013*
