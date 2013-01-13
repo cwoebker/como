@@ -57,49 +57,68 @@ TICKS = u'▁▂▃▅▆▇'
 
 def spark_string(ints):
     """Returns a spark string from given iterable of ints."""
-    step = ((max(i for i in ints if type(i) == int)) / float(len(TICKS) - 1)) or 1
-    return u''.join(TICKS[int(round(i / step))] if type(i) == int else '.' for i in ints)
+    step = ((
+        max(i for i in ints if type(i) == int)) / float(len(TICKS) - 1)) or 1
+    return u''.join(
+        TICKS[int(round(i / step))] if type(i) == int else '.' for i in ints)
 
 
 def spark_print(ints):
     """Prints spark to given stream."""
     puts(spark_string(ints).encode('utf-8'))
 
+
 ##### Platform specific code #####
 def age():
-    serial = {}
-    cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
-    serial['number'] = subprocess.check_output(cmd, shell=True).translate(None, '\n')
-    temp = serial['number']
-    for code in LOCATION_CODES:
-        temp = temp.lstrip(code)
-    serial['year'] = int(temp[0])
-    serial['week'] = int(temp[1:3])
-
-    creation = str(date.today().year)[:-1] + str(serial['year']) + str(serial['week']) + "1"
-
-    timedelta = datetime.utcnow() - datetime.strptime(creation, '%Y%W%w')
-    return timedelta.days / 30
-
-
-def battery():
     if platform.system() == "Darwin":
-        bat = subprocess.check_output('ioreg -w0 -l | grep Capacity', shell=True).translate(None, ' "|').split('\n')
-        battery = {}
-        battery['serial'] = subprocess.check_output('ioreg -w0 -l | grep BatterySerialNumber', shell=True).translate(None, '\n "|').lstrip('BatterySerialNumber=')
-        battery['temp'] = int(subprocess.check_output('ioreg -w0 -l | grep Temperature', shell=True).translate(None, '\n "|').lstrip('Temperature='))
+        serial = {}
+        cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
+        serial['number'] = subprocess.check_output(
+            cmd, shell=True).translate(None, '\n')
+        temp = serial['number']
+        for code in LOCATION_CODES:
+            temp = temp.lstrip(code)
+        serial['year'] = int(temp[0])
+        serial['week'] = int(temp[1:3])
+
+        creation = str(date.today().year)[:-1] + str(
+            serial['year']) + str(serial['week']) + "1"
+
+        timedelta = datetime.utcnow() - datetime.strptime(creation, '%Y%W%w')
+        return timedelta.days / 30
+    else:
+        puts("no age on this operating system")
+        sys.exit(0)
+
+
+def get_battery():
+    battery = {}
+    if platform.system() == "Darwin":
+        bat = subprocess.check_output(
+            'ioreg -w0 -l | grep Capacity',
+            shell=True).translate(None, ' "|').split('\n')
+        battery['serial'] = subprocess.check_output(
+            'ioreg -w0 -l | grep BatterySerialNumber',
+            shell=True).translate(None, '\n "|').lstrip('BatterySerialNumber=')
+        battery['temp'] = int(subprocess.check_output(
+            'ioreg -w0 -l | grep Temperature',
+            shell=True).translate(None, '\n "|').lstrip('Temperature='))
         battery['maxcap'] = int(bat[0].lstrip('MaxCapacity='))
         battery['curcap'] = int(bat[1].lstrip('CurrentCapacity='))
         battery['legacy'] = bat[2].lstrip('LegacyBatteryInfo=')
-        battery['cycles'] = int(battery['legacy'].translate(None, '{}=').split(',')[5].lstrip('CycleCount'))
-        battery['amperage'] = int(battery['legacy'].translate(None, '{}=').split(',')[0].lstrip('Amperage'))
+        battery['cycles'] = int(
+            battery['legacy'].translate(
+                None, '{}=').split(',')[5].lstrip('CycleCount'))
+        battery['amperage'] = int(
+            battery['legacy'].translate(
+                None, '{}=').split(',')[0].lstrip('Amperage'))
         if battery['amperage'] > 999999:
             battery['amperage'] -= 18446744073709551615
-        battery['voltage'] = int(battery['legacy'].translate(None, '{}=').split(',')[4].lstrip('Voltage'))
+        battery['voltage'] = int(
+            battery['legacy'].translate(
+                None, '{}=').split(',')[4].lstrip('Voltage'))
         battery['designcap'] = int(bat[3].lstrip('DesignCapacity='))
-        return battery
     elif platform.system() == "Linux":
-        battery = {}
         battery['serial'] = subprocess.check_output(
             "grep \"^serial number\" /proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
             shell=True
@@ -124,11 +143,11 @@ def battery():
             "grep \"^cycle count\" /proc/acpi/battery/BAT0/info",
             shell=True
         ).lstrip("cycle count:").translate(None, ' '))
-        return battery
+    return battery
 
 
 def save():
-    bat = battery()
+    bat = get_battery()
 
     data = []
     if not os.path.exists(COMO_BATTERY_FILE):
@@ -142,7 +161,9 @@ def save():
             #got messed up...
             # http://stackoverflow.com/questions/10206905/
             # how-to-convert-json-string-to-dictionary-and-save-order-in-keys
-            data.dict = json.loads(zlib.decompress(como.read()), object_pairs_hook=collections.OrderedDict)  # this ensures right order
+            data.dict = json.loads(
+                zlib.decompress(como.read()),
+                object_pairs_hook=collections.OrderedDict)
     data.append([
         datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),
         bat['maxcap'],
@@ -160,7 +181,7 @@ def stats():
         puts(colored.green(title))
     puts("-" * (8 + len(title)))
 
-    bat = battery()
+    bat = get_battery()
 
     with indent(6, quote=colored.yellow('      ')):
         puts("Battery Serial: %s" % bat['serial'])
@@ -170,7 +191,8 @@ def stats():
         puts("Max Capacity: %s" % bat['maxcap'])
         puts("Capacity: %s" % bat['curcap'])
         if platform.system() == "Darwin":  # Mac OS only
-            puts("Mac model: %s" % subprocess.check_output("sysctl -n hw.model", shell=True).rstrip("\n"))
+            puts("Mac model: %s" % subprocess.check_output(
+                "sysctl -n hw.model", shell=True).rstrip("\n"))
             puts("Temperature: %s ℃" % (int(bat['temp']) / 100.))
             puts("Voltage: %s" % bat['voltage'])
             puts("Amperage: %s" % bat['amperage'])
@@ -204,7 +226,8 @@ def stats():
                         cycles.append(int(element))
                     else:
                         cycles.append(element)
-                spark_print([c - min(c for c in cycles if type(c) == int) if type(c) == int else c for c in cycles])
+                spark_print([c - min(c for c in cycles if type(c) == int)
+                            if type(c) == int else c for c in cycles])
 
 
 def export_csv():
@@ -213,7 +236,9 @@ def export_csv():
     else:
         dataset = Dataset(headers=['time', 'capacity', 'cycles'])
         with open(COMO_BATTERY_FILE, 'r') as como:
-            dataset.dict = json.loads(zlib.decompress(como.read()), object_pairs_hook=collections.OrderedDict)
+            dataset.dict = json.loads(
+                zlib.decompress(como.read()),
+                object_pairs_hook=collections.OrderedDict)
         with open("como.csv", "w") as como:
             como.write(dataset.csv)
         puts("saved file to current directory")
@@ -226,9 +251,11 @@ def import_csv(path):
         data = []
     else:
         with open(COMO_BATTERY_FILE, 'r') as como:
-            data = json.loads(zlib.decompress(como.read()), object_pairs_hook=collections.OrderedDict)
-    with open(expanduser(path), "r") as f:
-        csv = f.read()
+            data = json.loads(
+                zlib.decompress(como.read()),
+                object_pairs_hook=collections.OrderedDict)
+    with open(expanduser(path), "r") as import_file:
+        csv = import_file.read()
     current_dataset = Dataset(headers=['time', 'capacity', 'cycles'])
     current_dataset.dict = data
     import_dataset = Dataset()
@@ -238,9 +265,11 @@ def import_csv(path):
         #if 'T' not in element['date']:
         try:
             element['date'] += "T00:00:00"
-            element['loadcycles'] = None if element['loadcycles'] == '-' else int(element['loadcycles'])
+            element['loadcycles'] = None if (
+                element['loadcycles'] == '-') else int(element['loadcycles'])
         except KeyError:
-            element['cycles'] = None if element['cycles'] == '-' else int(element['cycles'])
+            element['cycles'] = None if (
+                element['cycles'] == '-') else int(element['cycles'])
         element['capacity'] = int(element['capacity'])
         new_dict.append(element)
     import_dataset.dict = new_dict
@@ -254,11 +283,13 @@ def import_csv(path):
 
 def upload():
     if platform.system() == "Darwin":
-        UPLOAD_URL = SERVER_URL + "/upload"
+        url = SERVER_URL + "/upload"
         cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
-        computer_serial = subprocess.check_output(cmd, shell=True).translate(None, '\n')
-        bat = battery()
-        model = subprocess.check_output("sysctl -n hw.model", shell=True).rstrip("\n")
+        computer_serial = subprocess.check_output(
+            cmd, shell=True).translate(None, '\n')
+        bat = get_battery()
+        model = subprocess.check_output(
+            "sysctl -n hw.model", shell=True).rstrip("\n")
         data = {
             'computer': computer_serial,
             'model': model,
@@ -267,8 +298,8 @@ def upload():
             'age': age()
         }
         files = {'como': open(expanduser("~/.como"), 'rb')}
-        r = requests.post(UPLOAD_URL, files=files, data=data)
-        if r.status_code == requests.codes.ok:
+        response = requests.post(url, files=files, data=data)
+        if response.status_code == requests.codes.ok:
             puts("data uploaded")
         else:
             puts("upload failed")
@@ -278,11 +309,12 @@ def upload():
 
 def open_page():
     cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
-    os.system("open %s/battery/%s" % (SERVER_URL, subprocess.check_output(cmd, shell=True).translate(None, '\n')))
+    os.system("open %s/battery/%s" % (SERVER_URL, subprocess.check_output(
+        cmd, shell=True).translate(None, '\n')))
 
 
 def auto_upload():
-    APPLE_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
+    apple_plist = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -307,15 +339,17 @@ def auto_upload():
 </dict>
 </plist>"""
     if platform.system() == "Darwin":
-        PLIST_PATH = expanduser("~/Library/LaunchAgents/com.cwoebker.como-update.plist")
-        if os.path.exists(PLIST_PATH):
-            os.system("launchctl unload %s" % PLIST_PATH)
-            os.remove(PLIST_PATH)
+        plist_path = expanduser(
+            "~/Library/LaunchAgents/com.cwoebker.como-update.plist")
+        if os.path.exists(plist_path):
+            os.system("launchctl unload %s" % plist_path)
+            os.remove(plist_path)
             puts(colored.white("como will not upload data"))
         else:
-            with open(PLIST_PATH, "w") as f:
-                f.write(APPLE_PLIST % os.popen('which como').read().rstrip('\n'))
-            os.system("launchctl load %s" % PLIST_PATH)
+            with open(plist_path, "w") as plist_file:
+                plist_file.write(
+                    apple_plist % os.popen('which como').read().rstrip('\n'))
+            os.system("launchctl load %s" % plist_path)
             puts(colored.white("como will automatically upload the data"))
     elif platform.system() == "Linux":
         user_cron = CronTab()
@@ -334,7 +368,7 @@ def auto_upload():
 
 
 def auto():
-    APPLE_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
+    apple_plist = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -370,22 +404,24 @@ def auto():
 </dict>
 </plist>"""
     if platform.system() == "Darwin":
-        PLIST_PATH = expanduser("~/Library/LaunchAgents/com.cwoebker.como.plist")
-        if os.path.exists(PLIST_PATH):
-            os.system("launchctl unload %s" % PLIST_PATH)
-            os.remove(PLIST_PATH)
+        plist_path = expanduser(
+            "~/Library/LaunchAgents/com.cwoebker.como.plist")
+        if os.path.exists(plist_path):
+            os.system("launchctl unload %s" % plist_path)
+            os.remove(plist_path)
             puts(colored.white("como will only run manually"))
         else:
-            with open(PLIST_PATH, "w") as f:
-                f.write(APPLE_PLIST % os.popen('which como').read().rstrip('\n'))
-            os.system("launchctl load %s" % PLIST_PATH)
+            with open(plist_path, "w") as plist_file:
+                plist_file.write(
+                    apple_plist % os.popen('which como').read().rstrip('\n'))
+            os.system("launchctl load %s" % plist_path)
             puts(colored.white("como will run automatically"))
     elif platform.system() == "Linux":
         user_cron = CronTab()
         user_cron.read()
         if len(user_cron.find_command("como")) > 0:
             user_cron.remove_all("como")
-            user_cron.writcoe()
+            user_cron.write()
             puts(colored.white("como will only run manually"))
         else:
             job = user_cron.new(command="como")
@@ -408,7 +444,8 @@ def reset():
 
 def run():
     if platform.system() not in ['Darwin', 'Linux']:
-        puts(colored.red("Operating System not supported."), stream=sys.stderr.write)
+        puts(colored.red(
+            "Operating System not supported."), stream=sys.stderr.write)
         return 1
     define = """como.
 
