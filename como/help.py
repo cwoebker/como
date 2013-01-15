@@ -5,7 +5,6 @@ como.help - various stuff that helps
 
 import platform
 
-from clint.textui import puts
 
 system = platform.system().lower()
 
@@ -25,9 +24,4 @@ def spark_string(ints):
     step = ((
         max(i for i in ints if type(i) == int)) / float(len(TICKS) - 1)) or 1
     return u''.join(
-        TICKS[int(round(i / step))] if type(i) == int else '.' for i in ints)
-
-
-def spark_print(ints):
-    """Prints spark to given stream."""
-    puts(spark_string(ints).encode('utf-8'))
+        TICKS[int(round(i / step))] if type(i) == int else u'.' for i in ints)

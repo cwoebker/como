@@ -17,7 +17,7 @@ import requests
 
 from .battery import get_battery, get_age
 from .settings import COMO_BATTERY_FILE, SERVER_URL
-from .help import is_osx, is_lin, spark_print
+from .help import is_osx, is_lin, spark_string
 
 if is_lin:
     from crontab import CronTab
@@ -229,22 +229,27 @@ def cmd_info(args):
                 timedelta = datetime.utcnow() - datetime.strptime(
                     data['time'][0], "%Y-%m-%dT%H:%M:%S")
                 puts("Age of Database: %s Days" % str(timedelta.days))
-                # History
-                puts(colored.yellow("History:"))
+                # History Graphs
                 history = []
                 for element in data['capacity']:
                     history.append(int(element))
-                spark_print([h - min(history) for h in history])
-                # Cycles
-                puts(colored.yellow("Cycles:"))
                 cycles = []
                 for element in data['cycles']:
                     if element:
                         cycles.append(int(element))
                     else:
                         cycles.append(element)
-                spark_print([c - min(c for c in cycles if type(c) == int)
-                            if type(c) == int else c for c in cycles])
+                history = [h - min(history) for h in history]
+                cycles = [c - min(c for c in cycles if type(c) == int)
+                            if type(c) == int else c for c in cycles]
+                text1 = str(spark_string(history).encode('utf-8'))
+                text2 = str(spark_string(cycles).encode('utf-8'))
+                #print type('Star ★')
+                #puts(columns([colored.yellow('Star ★'), 10]))
+                puts(colored.yellow("Capacity:"))
+                puts(text1)
+                puts(colored.yellow("cycles:"))
+                puts(text2)
 
 
 def cmd_import(args):
