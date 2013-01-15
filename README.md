@@ -22,7 +22,7 @@ and since he invented the battery I thought it would be a great name.
 
 Saves the current battery state.
 
-    como stats
+    como info
 
 Prints information about battery and battery history.
 
@@ -42,13 +42,13 @@ Uploads data to server.
 
 Opens personal battery information page.
 
-    como auto
+    como automate
 
-Turns scheduling on or off. (Every day at 8am, 2pm and 8pm)
+Turns scheduling on or off. Saving and Uploading.
 
-    como auto upload
+    como init
 
-Turns auto-upload on or off. (Every day at 11am)
+Quick command to get everything setup on first start.
 
     como reset
 

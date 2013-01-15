@@ -1,5 +1,13 @@
 # History #
 
+## 0.4.7 ##
+
+*January 14th 2013*
+
+- restructured everything into multiple files
+- replaced docopt with clint
+- added init command for quick initial setup
+
 ## 0.4.6 ## ##
 
 *January 12th 2013*
