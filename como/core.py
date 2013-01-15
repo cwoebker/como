@@ -184,10 +184,10 @@ def cmd_save(args):
 
 def cmd_reset(args):
     if os.path.exists(COMO_BATTERY_FILE):
-        sure = raw_input("Are you sure? this will remove everything! [yes/no] ")
-        if sure == "yes":
+        sure = raw_input("Are you sure? this will remove everything! [y/n] ")
+        if sure == "y":
             os.remove(COMO_BATTERY_FILE)
-            puts(colored.white("cleared history"))
+            puts(colored.white("removed database"))
     else:
         puts(colored.white("no como database"))
 
@@ -215,7 +215,7 @@ def cmd_info(args):
             puts("Amperage: %s" % bat['amperage'])
             puts("Wattage: %s" % (bat['voltage'] * bat['amperage'] / 1000000.))
         if not os.path.exists(COMO_BATTERY_FILE):
-            puts(colored.red("No como database."))
+            puts(colored.yellow("No como database."))
         else:
             # Gathering data
             with open(COMO_BATTERY_FILE, 'r') as como:

@@ -8,7 +8,7 @@
 - replaced docopt with clint
 - added init command for quick initial setup
 
-## 0.4.6 ## ##
+## 0.4.6 ##
 
 *January 12th 2013*
 

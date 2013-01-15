@@ -107,7 +107,7 @@ class Command(object):
 
     @classmethod
     def all_commands(klass):
-        return sorted(klass.COMMANDS.values(),
+        return sorted(list(klass.COMMANDS.values()),
                       key=lambda cmd: cmd.name)
 
     def __init__(self, name=None, short=None, fn=None, usage=None, help=None):
