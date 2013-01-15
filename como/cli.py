@@ -10,7 +10,6 @@ from . import __version__
 from .core import ExitStatus, show_error
 from .core import cmd_save, cmd_reset, cmd_info, cmd_import, cmd_export, \
     cmd_upload, cmd_open, auto_save, auto_upload
-from .help import first_sentence
 
 
 def main():
@@ -128,8 +127,8 @@ def define_command(name=None, short=None, fn=None, usage=None, help=None):
 define_command(name='init', fn=cmd_init, usage='init',
     help='Initializes como.')
 
-define_command(name='automate', fn=cmd_automate, usage='automate <name>',
-    help='Opens como configuration in an editor.')
+define_command(name='automate', fn=cmd_automate, usage='automate',
+    help='Automates saving and uploading.')
 
 define_command(name='help', short=['h'], fn=cmd_help, usage='help <command>',
     help='Display help for a command.')

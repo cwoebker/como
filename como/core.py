@@ -185,7 +185,7 @@ def cmd_save(args):
     with open(COMO_BATTERY_FILE, 'w') as como:
         como.write(zlib.compress(data.json))
 
-    puts(colored.white("battery info saved (%s)" % str(data['time'][-1])))
+    puts("battery info saved (%s)" % str(data['time'][-1]))
 
 
 def cmd_reset(args):
