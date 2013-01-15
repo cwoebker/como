@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import como
 try:
-    from setuptools import setup, find_packages
+    from setuptools import setup
 except ImportError:
     from distutils.core import setup
-
-import como
-
-APP_NAME = 'como'
-
 
 # Grab requirments.
 with open('reqs.txt') as f:
@@ -21,7 +17,7 @@ settings = dict()
 
 
 settings.update(
-    name=APP_NAME,
+    name='como',
     version=como.__version__,
     description='como: batteries complete',
     long_description=open('README.md').read(),
@@ -30,7 +26,7 @@ settings.update(
     url='como.cwoebker.com',
     download_url='http://github.com/cwoebker/como',
     license=como.__licence__,
-    packages=find_packages(),
+    packages=['como'],
     install_requires=required,
     entry_points={
         'console_scripts': [
@@ -51,7 +47,6 @@ settings.update(
         'Topic :: Terminals',
         'Topic :: Utilities',
     ),
-    zip_safe=False,
 )
 
 setup(**settings)

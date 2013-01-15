@@ -1,2 +1,1 @@
-include reqs.txt
-include README.rst
+include reqs.txt README.md LICENSE
