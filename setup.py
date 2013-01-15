@@ -13,41 +13,45 @@ APP_NAME = 'como'
 
 # Grab requirments.
 with open('reqs.txt') as f:
-    require = f.readlines()
+    required = f.readlines()
 
 tests_require = ['nose']
 
-setup(
+settings = dict()
+
+
+settings.update(
     name=APP_NAME,
     version=como.__version__,
-    description='battery health & more',
-    long_description=como.__doc__,
+    description='como: batteries complete',
+    long_description=open('README.md').read(),
     author=como.__author__,
     author_email='me@cwoebker.com',
-    url='https://github.com/cwoebker/como',
+    url='como.cwoebker.com',
+    download_url='http://github.com/cwoebker/como',
+    license=como.__licence__,
     packages=find_packages(),
-    include_package_data=True,
-    install_requires=require,
-    extras_requires={},
-    tests_require=tests_require,
-    test_suite='nose.collector',
-    #py_modules=['como'],
-    scripts=['como.py'],
+    install_requires=required,
+    entry_points={
+        'console_scripts': [
+            'como = como.cli:main',
+        ],
+    },
     classifiers=(
         'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'Intended Audience :: System Administrators',
-        'Natural Language :: English',
-        'Topic :: Software Development',
-        'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
+        'License :: OSI Approved :: BSD License',
+        'Natural Language :: English',
+        'Topic :: Software Development',
+        'Topic :: Terminals',
+        'Topic :: Utilities',
     ),
-    entry_points={
-        'console_scripts': [
-            'como = como:run',
-        ],
-    },
     zip_safe=False,
 )
+
+setup(**settings)
