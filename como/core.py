@@ -153,24 +153,30 @@ def auto_save():
             puts(colored.white("como will run automatically"))
 
 
+def create_database():
+    puts(colored.yellow("Creating ~/.como"))
+    open(COMO_BATTERY_FILE, 'w').close()
+    return Dataset(headers=['time', 'capacity', 'cycles'])
+
+
+def read_database():
+    with open(COMO_BATTERY_FILE, 'r') as como:
+        data = Dataset(headers=['time', 'capacity', 'cycles'])
+        # http://stackoverflow.com/questions/10206905/
+        # how-to-convert-json-string-to-dictionary-and-save-order-in-keys
+        data.dict = json.loads(
+            zlib.decompress(como.read()),
+            object_pairs_hook=collections.OrderedDict)
+        return data
+
+
 def cmd_save(args):
     bat = get_battery()
 
-    data = []
     if not os.path.exists(COMO_BATTERY_FILE):
-        puts(colored.yellow("Creating ~/.como"))
-        open(COMO_BATTERY_FILE, 'w').close()
-        data = Dataset(headers=['time', 'capacity', 'cycles'])
+        data = create_database()
     else:
-        with open(COMO_BATTERY_FILE, 'r') as como:
-            data = Dataset(headers=['time', 'capacity', 'cycles'])
-            ### WATCH OUT: when directly importing through tablib header order
-            #got messed up...
-            # http://stackoverflow.com/questions/10206905/
-            # how-to-convert-json-string-to-dictionary-and-save-order-in-keys
-            data.dict = json.loads(
-                zlib.decompress(como.read()),
-                object_pairs_hook=collections.OrderedDict)
+        data = read_database()
     data.append([
         datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),
         bat['maxcap'],
@@ -217,10 +223,7 @@ def cmd_info(args):
         if not os.path.exists(COMO_BATTERY_FILE):
             puts(colored.yellow("No como database."))
         else:
-            # Gathering data
-            with open(COMO_BATTERY_FILE, 'r') as como:
-                data = Dataset()
-                data.json = zlib.decompress(como.read())
+            data = read_database()
             puts(colored.yellow("Database:"))
             with indent(4, quote=colored.yellow('    ')):
                 puts("Number of Entries: %d" % len(data))
@@ -252,84 +255,85 @@ def cmd_info(args):
                 puts(text2)
 
 
+def import_format(element):
+    try:
+        element['date'] += "T00:00:00"
+        element['loadcycles'] = None if (
+            element['loadcycles'] == '-') else int(element['loadcycles'])
+    except KeyError:
+        element['cycles'] = None if (
+            element['cycles'] == 'None') else int(element['cycles'])
+    element['capacity'] = int(element['capacity'])
+    return element
+
+
 def cmd_import(args):
     if not os.path.exists(COMO_BATTERY_FILE):
-        puts(colored.yellow("Creating ~/.como"))
-        open(COMO_BATTERY_FILE, 'w').close()
-        data = []
+        current_dataset = create_database()
     else:
-        with open(COMO_BATTERY_FILE, 'r') as como:
-            data = json.loads(
-                zlib.decompress(como.read()),
-                object_pairs_hook=collections.OrderedDict)
-    with open(os.path.expanduser(args.get(0)), "r") as import_file:
-        csv = import_file.read()
-    current_dataset = Dataset(headers=['time', 'capacity', 'cycles'])
-    current_dataset.dict = data
-    import_dataset = Dataset()
-    import_dataset.csv = csv
-    new_dict = []  # need to find a way to edit dataset itself, this is stupid
-    for element in import_dataset.dict:
-        #if 'T' not in element['date']:
-        try:
-            element['date'] += "T00:00:00"
-            element['loadcycles'] = None if (
-                element['loadcycles'] == '-') else int(element['loadcycles'])
-        except KeyError:
-            element['cycles'] = None if (
-                element['cycles'] == '-') else int(element['cycles'])
-        element['capacity'] = int(element['capacity'])
-        new_dict.append(element)
-    import_dataset.dict = new_dict
-    new = current_dataset.stack(import_dataset).sort('time')
+        current_dataset = read_database()
+    if os.path.exists(args.get(0)):
+        import_dataset = Dataset()
+        with open(os.path.expanduser(args.get(0)), "r") as import_file:
+            import_dataset.csv = import_file.read()
+        import_dataset.dict = map(import_format, import_dataset.dict)
+        new = current_dataset.stack(import_dataset).sort('time')
 
-    with open(COMO_BATTERY_FILE, 'w') as como:
-        como.write(zlib.compress(new.json))
+        with open(COMO_BATTERY_FILE, 'w') as como:
+            como.write(zlib.compress(new.json))
 
-    puts(colored.white("battery statistics imported"))
+        puts(colored.white("battery statistics imported"))
+    else:
+        show_error(colored.red("Couldn't open file: %s" % args.get(0)))
 
 
 def cmd_export(args):
     if not os.path.exists(COMO_BATTERY_FILE):
         puts(colored.red("No como database."))
     else:
-        dataset = Dataset(headers=['time', 'capacity', 'cycles'])
-        with open(COMO_BATTERY_FILE, 'r') as como:
-            dataset.dict = json.loads(
-                zlib.decompress(como.read()),
-                object_pairs_hook=collections.OrderedDict)
+        if os.path.exists("como.csv"):
+            sure = raw_input("Do you want to replace the old export file?" + \
+                            " [y/n] ")
+            if sure != 'y':
+                return
+        dataset = read_database()
         with open("como.csv", "w") as como:
             como.write(dataset.csv)
         puts("saved file to current directory")
 
 
 def cmd_upload(args):
-    if is_osx:
-        url = SERVER_URL + "/upload"
-        cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
-        computer_serial = subprocess.check_output(
-            cmd, shell=True).translate(None, '\n')
-        bat = get_battery()
-        model = subprocess.check_output(
-            "sysctl -n hw.model", shell=True).rstrip("\n")
-        data = {
-            'computer': computer_serial,
-            'model': model,
-            'battery': bat['serial'],
-            'design': bat['designcap'],
-            'age': get_age()
-        }
-        files = {'como': open(os.path.expanduser("~/.como"), 'rb')}
-        response = requests.post(url, files=files, data=data)
-        if response.status_code == requests.codes.ok:
-            puts("data uploaded")
-        else:
-            puts("upload failed")
+    if not os.path.exists(COMO_BATTERY_FILE):
+        puts(colored.red("No como database."))
     else:
-        puts("no uploading on this operating system")
+        if is_osx:
+            url = SERVER_URL + "/upload"
+            cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ " + \
+                  "{ split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
+            computer_serial = subprocess.check_output(
+                cmd, shell=True).translate(None, '\n')
+            bat = get_battery()
+            model = subprocess.check_output(
+                "sysctl -n hw.model", shell=True).rstrip("\n")
+            data = {
+                'computer': computer_serial,
+                'model': model,
+                'battery': bat['serial'],
+                'design': bat['designcap'],
+                'age': get_age()
+            }
+            files = {'como': open(COMO_BATTERY_FILE, 'rb')}
+            response = requests.post(url, files=files, data=data)
+            if response.status_code == requests.codes.ok:
+                puts("data uploaded")
+            else:
+                puts("upload failed")
+        else:
+            puts("no uploading on this operating system")
 
 
 def cmd_open(args):
-    cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
+    cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ " + \
+          "{ split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
     os.system("open %s/battery?id=%s" % (SERVER_URL, subprocess.check_output(
         cmd, shell=True).translate(None, '\n')))
