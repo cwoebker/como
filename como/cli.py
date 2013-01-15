@@ -58,8 +58,9 @@ def display_info():
 
 
 def cmd_init(args):
-    cmd_automate(args)
     cmd_save(args)
+    cmd_automate(args)
+    cmd_save(args)  # double save so user sees actual graph on site
     cmd_upload(args)
     cmd_open(args)
 
