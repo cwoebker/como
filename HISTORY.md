@@ -1,5 +1,12 @@
 # History #
 
+## 0.5.0-beta ##
+
+*January 16th 2013*
+
+- improved code structure
+- finalized basic code api for 0.5.0 release
+
 ## 0.4.7 ##
 
 *January 14th 2013*
