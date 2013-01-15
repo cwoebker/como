@@ -9,7 +9,7 @@ from clint.textui import colored, puts
 from . import __version__
 from .core import ExitStatus, show_error
 from .core import cmd_save, cmd_reset, cmd_info, cmd_import, cmd_export, \
-    cmd_upload, cmd_open, auto, auto_upload
+    cmd_upload, cmd_open, auto_save, auto_upload
 from .help import first_sentence
 
 
@@ -66,7 +66,7 @@ def cmd_init(args):
 
 
 def cmd_automate(args):
-    auto()
+    auto_save()
     auto_upload()
 
 
