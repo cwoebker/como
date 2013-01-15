@@ -14,9 +14,11 @@ from .settings import LOCATION_CODES
 
 
 def get_age():
+    """Get age of computer. Only OSX for now"""
     if is_osx:
         serial = {}
-        cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ { split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
+        cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ " + \
+              "{ split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
         serial['number'] = subprocess.check_output(
             cmd, shell=True).translate(None, '\n')
         temp = serial['number']
@@ -36,6 +38,8 @@ def get_age():
 
 
 def get_battery():
+    """Gets all information associated with the battery from respective
+    system sources"""
     battery = {}
     if is_osx:
         bat = subprocess.check_output(
@@ -64,23 +68,28 @@ def get_battery():
         battery['designcap'] = int(bat[3].lstrip('DesignCapacity='))
     elif is_lin:
         battery['serial'] = subprocess.check_output(
-            "grep \"^serial number\" /proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
+            "grep \"^serial number\" " + \
+            "/proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
             shell=True
         ).translate(None, '\n')
         battery['state'] = subprocess.check_output(
-            "grep \"^charging state\" /proc/acpi/battery/BAT0/state | awk '{ print $3 }'",
+            "grep \"^charging state\" " + \
+            "/proc/acpi/battery/BAT0/state | awk '{ print $3 }'",
             shell=True
         )
         battery['maxcap'] = float(subprocess.check_output(
-            "grep \"^last full capacity\" /proc/acpi/battery/BAT0/info | awk '{ print $4 }'",
+            "grep \"^last full capacity\" " + \
+            "/proc/acpi/battery/BAT0/info | awk '{ print $4 }'",
             shell=True
         ))
         battery['curcap'] = float(subprocess.check_output(
-            "grep \"^remaining capacity\" /proc/acpi/battery/BAT0/state | awk '{ print $3 }'",
+            "grep \"^remaining capacity\" " + \
+            "/proc/acpi/battery/BAT0/state | awk '{ print $3 }'",
             shell=True
         ))
         battery['designcap'] = float(subprocess.check_output(
-            "grep \"^design capacity:\" /proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
+            "grep \"^design capacity:\" " + \
+            "/proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
             shell=True
         ))
         battery['cycles'] = int(subprocess.check_output(
