@@ -14,12 +14,6 @@ is_win = (system == 'windows')
 is_lin = (system == 'linux')
 
 
-def first_sentence(s):
-    pos = s.find('. ')
-    if pos < 0:
-        pos = len(s) - 1
-    return s[:pos + 1]
-
 # www.github.com/kennethreitz/spark.py - this code is taken from kennethreitz
 # python port of holman's original spark
 

@@ -45,18 +45,17 @@ def execute(command):
 
 def display_info():
     puts('{0}. {1}'.format(
-        colored.yellow('como'),
-        u'A Cecil Woebker Project.'
-    ))
+        colored.yellow('como'), 'A Cecil Woebker Project.'))
 
-    puts('Usage: {0} {1}'.format(colored.yellow('como'), colored.green('<command>')))
+    puts('Usage: {0} {1}'.format(
+        colored.yellow('como'), colored.green('<command>')))
     puts('---------------------')
     for command in Command.all_commands():
         usage = command.usage or command.name
         help = command.help or ''
         puts('{0:40} {1}'.format(
                 colored.green(usage),
-                first_sentence(help)))
+                help))
 
 
 def cmd_init(args):
@@ -82,7 +81,7 @@ def cmd_help(args):
     usage = cmd.usage or ''
     help = cmd.help or ''
     help_text = '%s\n\n%s' % (usage, help)
-    print help_text
+    puts(help_text)
 
 
 ### Commands
