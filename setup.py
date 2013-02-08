@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+import sys
+
 import como
 try:
     from setuptools import setup
@@ -14,6 +17,12 @@ with open('reqs.txt') as f:
 tests_require = ['nose']
 
 settings = dict()
+
+
+# Publish Helper.
+if sys.argv[-1] == 'publish':
+    os.system('python setup.py sdist upload')
+    sys.exit()
 
 
 settings.update(
