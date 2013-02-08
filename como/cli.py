@@ -53,8 +53,8 @@ def display_info():
         usage = command.usage or command.name
         help = command.help or ''
         puts('{0:40} {1}'.format(
-                colored.green(usage),
-                help))
+            colored.green(usage),
+            help))
 
 
 def cmd_init(args):
@@ -72,7 +72,7 @@ def cmd_automate(args):
 
 def cmd_help(args):
     command = args.get(0)
-    if command == None:
+    if command is None:
         command = 'help'
     if not Command.lookup(command):
         command = 'help'
@@ -125,32 +125,42 @@ def define_command(name=None, short=None, fn=None, usage=None, help=None):
     command = Command(name=name, short=short, fn=fn, usage=usage, help=help)
     Command.register(command)
 
-define_command(name='init', fn=cmd_init, usage='init',
+define_command(
+    name='init', fn=cmd_init, usage='init',
     help='Initializes como.')
 
-define_command(name='automate', fn=cmd_automate, usage='automate',
+define_command(
+    name='automate', fn=cmd_automate, usage='automate',
     help='Automates saving and uploading.')
 
-define_command(name='help', short=['h'], fn=cmd_help, usage='help <command>',
+define_command(
+    name='help', short=['h'], fn=cmd_help, usage='help <command>',
     help='Display help for a command.')
 
-define_command(name='save', fn=cmd_save, usage='save',
+define_command(
+    name='save', fn=cmd_save, usage='save',
     help='Saves battery information to database.')
 
-define_command(name='reset', fn=cmd_reset, usage='reset',
+define_command(
+    name='reset', fn=cmd_reset, usage='reset',
     help='Deletes database.')
 
-define_command(name='info', fn=cmd_info, usage='info',
+define_command(
+    name='info', fn=cmd_info, usage='info',
     help='Shows battery information.')
 
-define_command(name='import', fn=cmd_import, usage='import <file>',
+define_command(
+    name='import', fn=cmd_import, usage='import <file>',
     help='Import data from .csv file.')
 
-define_command(name='export', fn=cmd_export, usage='export',
+define_command(
+    name='export', fn=cmd_export, usage='export',
     help='Export data to .csv file.')
 
-define_command(name='upload', fn=cmd_upload, usage='upload',
+define_command(
+    name='upload', fn=cmd_upload, usage='upload',
     help='Upload data to server.')
 
-define_command(name='open', fn=cmd_open, usage='open',
+define_command(
+    name='open', fn=cmd_open, usage='open',
     help='Open your battery page.')

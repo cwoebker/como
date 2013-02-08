@@ -36,7 +36,8 @@ def show_error(msg):
 
 def auto_upload():
     apple_plist = """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" """ + \
+""" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
@@ -90,7 +91,8 @@ def auto_upload():
 
 def auto_save():
     apple_plist = """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" """ + \
+""" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
@@ -243,8 +245,10 @@ def cmd_info(args):
                     else:
                         cycles.append(element)
                 history = [h - min(history) for h in history]
-                cycles = [c - min(c for c in cycles if type(c) == int)
-                            if type(c) == int else c for c in cycles]
+                cycles = [
+                    c - min(c for c in cycles if type(c) == int)
+                    if type(c) == int else c for c in cycles
+                ]
                 text1 = str(spark_string(history).encode('utf-8'))
                 text2 = str(spark_string(cycles).encode('utf-8'))
                 #print type('Star ★')
@@ -292,8 +296,9 @@ def cmd_export(args):
         puts(colored.red("No como database."))
     else:
         if os.path.exists("como.csv"):
-            sure = raw_input("Do you want to replace the old export file?" + \
-                            " [y/n] ")
+            sure = raw_input(
+                "Do you want to replace the old export file?" +
+                " [y/n] ")
             if sure != 'y':
                 return
         dataset = read_database()

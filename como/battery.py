@@ -68,27 +68,27 @@ def get_battery():
         battery['designcap'] = int(bat[3].lstrip('DesignCapacity='))
     elif is_lin:
         battery['serial'] = subprocess.check_output(
-            "grep \"^serial number\" " + \
+            "grep \"^serial number\" " +
             "/proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
             shell=True
         ).translate(None, '\n')
         battery['state'] = subprocess.check_output(
-            "grep \"^charging state\" " + \
+            "grep \"^charging state\" " +
             "/proc/acpi/battery/BAT0/state | awk '{ print $3 }'",
             shell=True
         )
         battery['maxcap'] = float(subprocess.check_output(
-            "grep \"^last full capacity\" " + \
+            "grep \"^last full capacity\" " +
             "/proc/acpi/battery/BAT0/info | awk '{ print $4 }'",
             shell=True
         ))
         battery['curcap'] = float(subprocess.check_output(
-            "grep \"^remaining capacity\" " + \
+            "grep \"^remaining capacity\" " +
             "/proc/acpi/battery/BAT0/state | awk '{ print $3 }'",
             shell=True
         ))
         battery['designcap'] = float(subprocess.check_output(
-            "grep \"^design capacity:\" " + \
+            "grep \"^design capacity:\" " +
             "/proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
             shell=True
         ))
