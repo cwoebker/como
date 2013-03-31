@@ -8,7 +8,7 @@ from clint.textui import colored, puts
 
 from . import __version__
 from .core import ExitStatus, show_error
-from .core import cmd_save, cmd_reset, cmd_info, cmd_import, cmd_export, \
+from .core import cmd_save, cmd_reset, cmd_data, cmd_info, cmd_import, cmd_export, \
     cmd_upload, cmd_open, auto_save, auto_upload
 
 
@@ -144,6 +144,10 @@ define_command(
 define_command(
     name='reset', fn=cmd_reset, usage='reset',
     help='Deletes database.')
+
+define_command(
+    name='data', fn=cmd_data, usage='data',
+    help='Shows database information.')
 
 define_command(
     name='info', fn=cmd_info, usage='info',
