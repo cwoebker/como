@@ -200,6 +200,46 @@ def cmd_reset(args):
         puts(colored.white("no como database"))
 
 
+def cmd_data(args):
+    if not os.path.exists(COMO_BATTERY_FILE):
+        puts(colored.yellow("No como database."))
+    else:
+        data = read_database()
+        with indent(4):
+            title = "Como Database"
+            puts(colored.green(title))
+        puts("-" * (8 + len(title)))
+        with indent(6, quote=colored.yellow('    ')):
+            puts("Number of Entries: %d" % len(data))
+            puts("First save: " + str(data['time'][0]))
+            puts("Last save: " + str(data['time'][-1]))
+            timedelta = datetime.utcnow() - datetime.strptime(
+                data['time'][0], "%Y-%m-%dT%H:%M:%S")
+            puts("Age of Database: %s Days" % str(timedelta.days))
+            # History Graphs
+            history = []
+            for element in data['capacity']:
+                history.append(int(element))
+            cycles = []
+            for element in data['cycles']:
+                if element:
+                    cycles.append(int(element))
+                else:
+                    cycles.append(element)
+            history = [h - min(history) for h in history]
+            cycles = [
+                c - min(c for c in cycles if type(c) == int)
+                if type(c) == int else c for c in cycles
+            ]
+            text1 = str(spark_string(history).encode('utf-8'))
+            text2 = str(spark_string(cycles).encode('utf-8'))
+            #print type('Star ★')
+            #puts(columns([colored.yellow('Star ★'), 10]))
+            puts(colored.yellow("Capacity:"))
+            puts(text1)
+            puts(colored.yellow("cycles:"))
+            puts(text2)
+
 def cmd_info(args):
     with indent(4):
         title = "Como Info"
@@ -222,41 +262,6 @@ def cmd_info(args):
             puts("Voltage: %s" % bat['voltage'])
             puts("Amperage: %s" % bat['amperage'])
             puts("Wattage: %s" % (bat['voltage'] * bat['amperage'] / 1000000.))
-        if not os.path.exists(COMO_BATTERY_FILE):
-            puts(colored.yellow("No como database."))
-        else:
-            data = read_database()
-            puts(colored.yellow("Database:"))
-            with indent(4, quote=colored.yellow('    ')):
-                puts("Number of Entries: %d" % len(data))
-                puts("First save: " + str(data['time'][0]))
-                puts("Last save: " + str(data['time'][-1]))
-                timedelta = datetime.utcnow() - datetime.strptime(
-                    data['time'][0], "%Y-%m-%dT%H:%M:%S")
-                puts("Age of Database: %s Days" % str(timedelta.days))
-                # History Graphs
-                history = []
-                for element in data['capacity']:
-                    history.append(int(element))
-                cycles = []
-                for element in data['cycles']:
-                    if element:
-                        cycles.append(int(element))
-                    else:
-                        cycles.append(element)
-                history = [h - min(history) for h in history]
-                cycles = [
-                    c - min(c for c in cycles if type(c) == int)
-                    if type(c) == int else c for c in cycles
-                ]
-                text1 = str(spark_string(history).encode('utf-8'))
-                text2 = str(spark_string(cycles).encode('utf-8'))
-                #print type('Star ★')
-                #puts(columns([colored.yellow('Star ★'), 10]))
-                puts(colored.yellow("Capacity:"))
-                puts(text1)
-                puts(colored.yellow("cycles:"))
-                puts(text2)
 
 
 def import_format(element):
