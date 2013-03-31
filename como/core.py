@@ -10,6 +10,7 @@ import zlib
 import collections
 from datetime import datetime
 import subprocess
+import hashlib
 
 from clint.textui import puts, colored, indent
 from tablib import Dataset
@@ -326,9 +327,9 @@ def cmd_upload(args):
             model = subprocess.check_output(
                 "sysctl -n hw.model", shell=True).rstrip("\n")
             data = {
-                'computer': computer_serial,
+                'computer': hashlib.md5(computer_serial).hexdigest(),
                 'model': model,
-                'battery': bat['serial'],
+                'battery': hashlib.md5(bat['serial']).hexdigest(),
                 'design': bat['designcap'],
                 'age': get_age()
             }
@@ -345,5 +346,5 @@ def cmd_upload(args):
 def cmd_open(args):
     cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ " + \
           "{ split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
-    os.system("open %s/battery?id=%s" % (SERVER_URL, subprocess.check_output(
-        cmd, shell=True).translate(None, '\n')))
+    out = subprocess.check_output(cmd, shell=True).translate(None, '\n')
+    os.system("open %s/battery?id=%s" % (SERVER_URL, hashlib.md5(out).hexdigest()))
