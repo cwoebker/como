@@ -53,6 +53,12 @@ def get_age():
         sys.exit(0)
 
 
+def grep_filter(list, term):
+    for line in list:
+        if term in line:
+            yield line
+
+
 def get_battery():
     """Gets all information associated with the battery from respective
     system sources"""

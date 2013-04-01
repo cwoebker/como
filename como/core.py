@@ -347,4 +347,4 @@ def cmd_open(args):
     cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ " + \
           "{ split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
     out = subprocess.check_output(cmd, shell=True).translate(None, '\n')
-    os.system("open %s/battery?id=%s" % (SERVER_URL, hashlib.md5(out).hexdigest()))
+    os.system("open %s/battery?id=%s" % (SERVER_URL, out))
