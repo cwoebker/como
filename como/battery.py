@@ -9,7 +9,7 @@ from datetime import date, datetime
 
 from clint.textui import puts
 
-from .help import is_osx, is_lin
+from .help import is_osx, is_lin, is_win
 from .settings import LOCATION_CODES
 
 
@@ -96,4 +96,33 @@ def get_battery():
             "grep \"^cycle count\" /proc/acpi/battery/BAT0/info",
             shell=True
         ).lstrip("cycle count:").translate(None, ' '))
+    elif is_win:
+        # Get power status of the system using ctypes to call GetSystemPowerStatus
+        import ctypes
+        from ctypes import wintypes
+
+        class SYSTEM_POWER_STATUS(ctypes.Structure):
+            _fields_ = [
+                ('ACLineStatus', wintypes.BYTE),
+                ('BatteryFlag', wintypes.BYTE),
+                ('BatteryLifePercent', wintypes.BYTE),
+                ('Reserved1', wintypes.BYTE),
+                ('BatteryLifeTime', wintypes.DWORD),
+                ('BatteryFullLifeTime', wintypes.DWORD),
+            ]
+
+        SYSTEM_POWER_STATUS_P = ctypes.POINTER(SYSTEM_POWER_STATUS)
+
+        GetSystemPowerStatus = ctypes.windll.kernel32.GetSystemPowerStatus
+        GetSystemPowerStatus.argtypes = [SYSTEM_POWER_STATUS_P]
+        GetSystemPowerStatus.restype = wintypes.BOOL
+
+        status = SYSTEM_POWER_STATUS()
+        if not GetSystemPowerStatus(ctypes.pointer(status)):
+            raise ctypes.WinError()
+        print 'ACLineStatus', status.ACLineStatus
+        print 'BatteryFlag', status.BatteryFlag
+        print 'BatteryLifePercent', status.BatteryLifePercent
+        print 'BatteryLifeTime', status.BatteryLifeTime
+        print 'BatteryFullLifeTime', status.BatteryFullLifeTime
     return battery
