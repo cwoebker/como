@@ -4,13 +4,29 @@ como.battery - the power connection
 """
 
 import sys
-import subprocess
 from datetime import date, datetime
 
 from clint.textui import puts
 
 from .help import is_osx, is_lin, is_win
 from .settings import LOCATION_CODES
+
+# OS dependent imports
+
+if is_osx or is_lin:
+    import subprocess
+
+if is_win:
+    try:
+        import win32api
+    except ImportError:
+        print "The windows python api isn't installed. Please install pywin32."
+        sys.exit(1)
+    try:
+        import wmi
+    except ImportError:
+        print "Make sure wmi is installed."
+        sys.exit(1)
 
 
 def get_age():
@@ -98,7 +114,7 @@ def get_battery():
         ).lstrip("cycle count:").translate(None, ' '))
     elif is_win:
         # Get power status of the system using ctypes to call GetSystemPowerStatus
-        import ctypes
+        """import ctypes
         from ctypes import wintypes
 
         class SYSTEM_POWER_STATUS(ctypes.Structure):
@@ -124,5 +140,9 @@ def get_battery():
         print 'BatteryFlag', status.BatteryFlag
         print 'BatteryLifePercent', status.BatteryLifePercent
         print 'BatteryLifeTime', status.BatteryLifeTime
-        print 'BatteryFullLifeTime', status.BatteryFullLifeTime
+        print 'BatteryFullLifeTime', status.BatteryFullLifeTime"""
+        c = wmi.WMI()
+        b = c.Win32_Battery()[0]
+        battery['serial'] = b.Name
+
     return battery
