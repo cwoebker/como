@@ -3,16 +3,22 @@
 como.cli - command line stuff
 """
 
+import sys
+
 from clint import args
 from clint.textui import colored, puts
 
 from . import __version__
-from .core import ExitStatus, show_error
+from .help import supported, error, warning
+from .core import ExitStatus
 from .core import cmd_save, cmd_reset, cmd_data, cmd_info, cmd_import, cmd_export, \
     cmd_upload, cmd_open, auto_save, auto_upload
 
 
 def main():
+    if not supported:
+        error("Your OS is not supported.")
+        sys.exit(1)
     arg = args.get(0)
     if arg:
         command = Command.lookup(arg)
@@ -28,7 +34,7 @@ def main():
                 __version__
             ))
         else:
-            show_error(colored.red('Unknown command: {0}'.format(arg)))
+            error('Unknown command: {0}'.format(arg))
             display_info()
             return ExitStatus.ERROR
     else:
@@ -76,7 +82,7 @@ def cmd_help(args):
         command = 'help'
     if not Command.lookup(command):
         command = 'help'
-        show_error(colored.red('Unknown command: {0}'.format(args.get(0))))
+        error('Unknown command: {0}'.format(args.get(0)))
     cmd = Command.lookup(command)
     usage = cmd.usage or ''
     help = cmd.help or ''
