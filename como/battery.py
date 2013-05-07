@@ -69,17 +69,17 @@ def get_battery():
             shell=True).translate(None, '\n "|').lstrip('Temperature='))
         battery['maxcap'] = int(bat[0].lstrip('MaxCapacity='))
         battery['curcap'] = int(bat[1].lstrip('CurrentCapacity='))
-        battery['legacy'] = bat[2].lstrip('LegacyBatteryInfo=')
+        legacy = bat[2].lstrip('LegacyBatteryInfo=')
         battery['cycles'] = int(
-            battery['legacy'].translate(
+            legacy.translate(
                 None, '{}=').split(',')[5].lstrip('CycleCount'))
         battery['amperage'] = int(
-            battery['legacy'].translate(
+            legacy.translate(
                 None, '{}=').split(',')[0].lstrip('Amperage'))
         if battery['amperage'] > 999999:
             battery['amperage'] -= 18446744073709551615
         battery['voltage'] = int(
-            battery['legacy'].translate(
+            legacy.translate(
                 None, '{}=').split(',')[4].lstrip('Voltage'))
         battery['designcap'] = int(bat[3].lstrip('DesignCapacity='))
     elif is_lin:
@@ -141,8 +141,20 @@ def get_battery():
         print 'BatteryLifePercent', status.BatteryLifePercent
         print 'BatteryLifeTime', status.BatteryLifeTime
         print 'BatteryFullLifeTime', status.BatteryFullLifeTime"""
-        c = wmi.WMI()
-        b = c.Win32_Battery()[0]
+        #c = wmi.WMI()
+        t = wmi.WMI(moniker = "//./root/wmi")
+        #b = c.Win32_Battery()[0]
+        battery['maxcap'] = t.ExecQuery("Select * from BatteryFullChargedCapacity")[0].FullChargedCapacity
+        batt = t.ExecQuery("Select * from BatteryStatus where Voltage > 0")[0]
+        battery['curcap'] = batt.RemainingCapacity
+        battery['voltage'] = batt.Voltage
+        battery['amperage'] = batt.ChargeRate
+        if batt.Charging:
+            battery['amperage'] = batt.ChargeRate
+        elif batt.Discharging:
+            battery['amperage'] = batt.DischargeRate
+        else:
+            battery['amperage'] = 0
         battery['serial'] = b.Name
 
     return battery
