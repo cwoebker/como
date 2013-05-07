@@ -3,7 +3,6 @@
 como.core - the basic ingredients to a great battery
 """
 
-import sys
 import os
 import json
 import zlib
@@ -18,7 +17,7 @@ import requests
 
 from .battery import get_battery, get_age
 from .settings import COMO_BATTERY_FILE, SERVER_URL
-from .help import is_osx, is_lin, spark_string
+from .help import is_osx, is_lin, is_win, spark_string, warning, error
 
 if is_lin:
     from crontab import CronTab
@@ -28,11 +27,6 @@ class ExitStatus:
     """Exit status code constants."""
     OK = 0
     ERROR = 1
-
-
-def show_error(msg):
-    sys.stdout.flush()
-    sys.stderr.write(msg + '\n')
 
 
 def auto_upload():
@@ -88,6 +82,8 @@ def auto_upload():
             #job.hour.on(19)
             user_cron.write()
             puts(colored.white("como will automatically upload the data"))
+    elif is_win:
+        error("Sorry there is no auto-upload for windows.")
 
 
 def auto_save():
@@ -154,6 +150,8 @@ def auto_save():
             #job.hour.on(19)
             user_cron.write()
             puts(colored.white("como will run automatically"))
+    elif is_win:
+        error("Sorry there is no auto-upload for windows.")
 
 
 def create_database():
@@ -198,7 +196,7 @@ def cmd_reset(args):
             os.remove(COMO_BATTERY_FILE)
             puts(colored.white("removed database"))
     else:
-        puts(colored.white("no como database"))
+        puts(colored.yellow("no como database"))
 
 
 def cmd_data(args):
@@ -241,6 +239,7 @@ def cmd_data(args):
             puts(colored.yellow("cycles:"))
             puts(text2)
 
+
 def cmd_info(args):
     with indent(4):
         title = "Como Info"
@@ -251,15 +250,17 @@ def cmd_info(args):
 
     with indent(6, quote=colored.yellow('      ')):
         puts("Battery Serial: %s" % bat['serial'])
-        puts("Age of Computer: %s months" % get_age())
-        puts("Number of cycles: %s" % bat['cycles'])
-        puts("Design Capacity: %s" % bat['designcap'])
         puts("Max Capacity: %s" % bat['maxcap'])
         puts("Capacity: %s" % bat['curcap'])
+        if is_osx or is_lin:
+            puts("Number of cycles: %s" % bat['cycles'])
+            puts("Design Capacity: %s" % bat['designcap'])
         if is_osx:
             puts("Mac model: %s" % subprocess.check_output(
                 "sysctl -n hw.model", shell=True).rstrip("\n"))
+            puts("Age of Computer: %s months" % get_age())
             puts("Temperature: %s ℃" % (int(bat['temp']) / 100.))
+        if is_osx or is_win:
             puts("Voltage: %s" % bat['voltage'])
             puts("Amperage: %s" % bat['amperage'])
             puts("Wattage: %s" % (bat['voltage'] * bat['amperage'] / 1000000.))
@@ -294,7 +295,7 @@ def cmd_import(args):
 
         puts(colored.white("battery statistics imported"))
     else:
-        show_error(colored.red("Couldn't open file: %s" % args.get(0)))
+        error("Couldn't open file: %s" % args.get(0))
 
 
 def cmd_export(args):

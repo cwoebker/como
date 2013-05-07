@@ -148,7 +148,7 @@ def get_battery():
         print 'BatteryLifeTime', status.BatteryLifeTime
         print 'BatteryFullLifeTime', status.BatteryFullLifeTime"""
         #c = wmi.WMI()
-        t = wmi.WMI(moniker = "//./root/wmi")
+        t = wmi.WMI(moniker="//./root/wmi")
         #b = c.Win32_Battery()[0]
         battery['maxcap'] = t.ExecQuery("Select * from BatteryFullChargedCapacity")[0].FullChargedCapacity
         batt = t.ExecQuery("Select * from BatteryStatus where Voltage > 0")[0]
@@ -161,6 +161,6 @@ def get_battery():
             battery['amperage'] = batt.DischargeRate
         else:
             battery['amperage'] = 0
-        battery['serial'] = b.Name
+        battery['serial'] = batt.Name
 
     return battery
