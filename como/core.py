@@ -13,7 +13,6 @@ import hashlib
 
 from clint.textui import puts, colored, indent
 from tablib import Dataset
-import requests
 
 from .battery import get_battery, get_age
 from .settings import COMO_BATTERY_FILE, SERVER_URL
@@ -21,6 +20,9 @@ from .help import is_osx, is_lin, is_win, spark_string, warning, error
 
 if is_lin:
     from crontab import CronTab
+
+if is_osx:
+    import requests
 
 
 class ExitStatus:
@@ -178,11 +180,14 @@ def cmd_save(args):
         data = create_database()
     else:
         data = read_database()
+    if is_win:
+        bat['cycles'] = None
     data.append([
         datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),
         bat['maxcap'],
         bat['cycles'],
     ])
+
     with open(COMO_BATTERY_FILE, 'w') as como:
         como.write(zlib.compress(data.json))
 
