@@ -16,7 +16,7 @@ from tablib import Dataset
 
 from .battery import get_battery, get_age
 from .settings import COMO_BATTERY_FILE, SERVER_URL
-from .help import is_osx, is_lin, is_win, spark_string, warning, error
+from .help import is_osx, is_lin, is_win, spark_string, warning, error, title
 
 if is_lin:
     from crontab import CronTab
@@ -209,11 +209,8 @@ def cmd_data(args):
         puts(colored.yellow("No como database."))
     else:
         data = read_database()
-        with indent(4):
-            title = "Como Database"
-            puts(colored.green(title))
-        puts("-" * (8 + len(title)))
-        with indent(6, quote=colored.yellow('    ')):
+        title("Como Database")
+        with indent(6, quote='    '):
             puts("Number of Entries: %d" % len(data))
             puts("First save: " + str(data['time'][0]))
             puts("Last save: " + str(data['time'][-1]))
@@ -221,39 +218,37 @@ def cmd_data(args):
                 data['time'][0], "%Y-%m-%dT%H:%M:%S")
             puts("Age of Database: %s Days" % str(timedelta.days))
             # History Graphs
-            history = []
-            for element in data['capacity']:
-                history.append(int(element))
-            cycles = []
-            for element in data['cycles']:
-                if element:
-                    cycles.append(int(element))
-                else:
-                    cycles.append(element)
-            history = [h - min(history) for h in history]
-            cycles = [
-                c - min(c for c in cycles if type(c) == int)
-                if type(c) == int else c for c in cycles
-            ]
-            text1 = str(spark_string(history).encode('utf-8'))
-            text2 = str(spark_string(cycles).encode('utf-8'))
-            #print type('Star ★')
-            #puts(columns([colored.yellow('Star ★'), 10]))
-            puts(colored.yellow("Capacity:"))
-            puts(text1)
-            puts(colored.yellow("cycles:"))
-            puts(text2)
+            if not is_win:
+                history = []
+                for element in data['capacity']:
+                    history.append(int(element))
+                cycles = []
+                for element in data['cycles']:
+                    if element:
+                        cycles.append(int(element))
+                    else:
+                        cycles.append(element)
+                history = [h - min(history) for h in history]
+                cycles = [
+                    c - min(c for c in cycles if type(c) == int)
+                    if type(c) == int else c for c in cycles
+                ]
+                text1 = str(spark_string(history).encode('utf-8'))
+                text2 = str(spark_string(cycles).encode('utf-8'))
+                #print type('Star ★')
+                #puts(columns([colored.yellow('Star ★'), 10]))
+                warning("Capacity:")
+                puts(text1)
+                warning("Cycles:")
+                puts(text2)
 
 
 def cmd_info(args):
-    with indent(4):
-        title = "Como Info"
-        puts(colored.green(title))
-    puts("-" * (8 + len(title)))
+    title("Como Info")
 
     bat = get_battery()
 
-    with indent(6, quote=colored.yellow('      ')):
+    with indent(6, quote='      '):
         puts("Battery Serial: %s" % bat['serial'])
         puts("Max Capacity: %s" % bat['maxcap'])
         puts("Capacity: %s" % bat['curcap'])

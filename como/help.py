@@ -4,7 +4,7 @@ como.help - various stuff that helps
 """
 
 import platform
-from clint.textui import colored, puts
+from clint.textui import colored, puts, indent
 
 
 system = platform.system().lower()
@@ -16,21 +16,36 @@ supported = is_lin or is_osx or is_win
 
 # www.github.com/kennethreitz/spark.py - this code is taken from kennethreitz
 # python port of holman's original spark
+# slightly altered
 
 TICKS = u'▁▂▃▅▆▇'
 
 
 def spark_string(ints):
     """Returns a spark string from given iterable of ints."""
-    step = ((
-        max(i for i in ints if type(i) == int)) / float(len(TICKS) - 1)) or 1
+    ints = [i for i in ints if type(i) == int]
+    if len(ints) == 0:
+        return ""
+    step = (max(ints) / float(len(TICKS) - 1)) or 1
     return u''.join(
         TICKS[int(round(i / step))] if type(i) == int else u'.' for i in ints)
 
 
+def title(msg):
+    if not is_win:
+        msg = colored.green(msg)
+    with indent(4):
+        puts(msg)
+    puts("-" * (8 + len(msg)))
+
+
 def warning(msg):
-    puts(colored.yellow(msg))
+    if not is_win:
+        msg = colored.yellow(msg)
+    puts(msg)
 
 
 def error(msg):
-    puts(colored.red(msg))
+    if not is_win:
+        msg = colored.error(msg)
+    puts(msg)
