@@ -39,6 +39,16 @@ def title(msg):
     puts("-" * (8 + len(msg)))
 
 
+def msg(msg):
+    puts(msg)
+
+
+def info(msg):
+    if not is_win:
+        msg = colored.white(msg)
+    puts(msg)
+
+
 def warning(msg):
     if not is_win:
         msg = colored.yellow(msg)
