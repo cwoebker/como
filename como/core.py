@@ -32,6 +32,23 @@ class ExitStatus:
     ERROR = 1
 
 
+def create_database():
+    warning("Creating ~/.como")
+    open(COMO_BATTERY_FILE, 'w').close()
+    return Dataset(headers=['time', 'capacity', 'cycles'])
+
+
+def read_database():
+    with open(COMO_BATTERY_FILE, 'r') as como:
+        data = Dataset(headers=['time', 'capacity', 'cycles'])
+        # http://stackoverflow.com/questions/10206905/
+        # how-to-convert-json-string-to-dictionary-and-save-order-in-keys
+        data.dict = json.loads(
+            zlib.decompress(como.read()),
+            object_pairs_hook=collections.OrderedDict)
+        return data
+
+
 def auto_upload():
     apple_plist = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" """ + \
@@ -157,23 +174,6 @@ def auto_save():
         error("Sorry there is no auto-upload for windows.")
 
 
-def create_database():
-    puts(colored.yellow("Creating ~/.como"))
-    open(COMO_BATTERY_FILE, 'w').close()
-    return Dataset(headers=['time', 'capacity', 'cycles'])
-
-
-def read_database():
-    with open(COMO_BATTERY_FILE, 'r') as como:
-        data = Dataset(headers=['time', 'capacity', 'cycles'])
-        # http://stackoverflow.com/questions/10206905/
-        # how-to-convert-json-string-to-dictionary-and-save-order-in-keys
-        data.dict = json.loads(
-            zlib.decompress(como.read()),
-            object_pairs_hook=collections.OrderedDict)
-        return data
-
-
 def cmd_save(args):
     bat = get_battery()
 
@@ -192,7 +192,7 @@ def cmd_save(args):
     with open(COMO_BATTERY_FILE, 'w') as como:
         como.write(zlib.compress(data.json))
 
-    puts("battery info saved (%s)" % str(data['time'][-1]))
+    msg("battery info saved (%s)" % str(data['time'][-1]))
 
 
 def cmd_reset(args):
@@ -200,9 +200,9 @@ def cmd_reset(args):
         sure = raw_input("Are you sure? this will remove everything! [y/n] ")
         if sure == "y":
             os.remove(COMO_BATTERY_FILE)
-            puts(colored.white("removed database"))
+            info("removed database")
     else:
-        puts(colored.yellow("no como database"))
+        warning("no como database")
 
 
 def cmd_data(args):
@@ -301,7 +301,7 @@ def cmd_import(args):
 
 def cmd_export(args):
     if not os.path.exists(COMO_BATTERY_FILE):
-        puts(colored.red("No como database."))
+        error("No como database.")
     else:
         if os.path.exists("como.csv"):
             sure = raw_input(
@@ -312,12 +312,12 @@ def cmd_export(args):
         dataset = read_database()
         with open("como.csv", "w") as como:
             como.write(dataset.csv)
-        puts("saved file to current directory")
+        msg("saved file to current directory")
 
 
 def cmd_upload(args):
     if not os.path.exists(COMO_BATTERY_FILE):
-        puts(colored.red("No como database."))
+        error("No como database.")
     else:
         if is_osx:
             url = SERVER_URL + "/upload"
@@ -342,7 +342,7 @@ def cmd_upload(args):
             else:
                 puts("upload failed")
         else:
-            puts("no uploading on this operating system")
+            msg("no uploading on this operating system")
 
 
 def cmd_open(args):
