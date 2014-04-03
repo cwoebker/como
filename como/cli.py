@@ -8,10 +8,10 @@ import sys
 from clint import args
 from clint.textui import colored, puts
 
-from . import __version__
-from .help import supported, error, warning
 from .core import ExitStatus
-from .core import cmd_save, cmd_reset, cmd_data, cmd_info, cmd_import, cmd_export, \
+from como import __version__
+from como.help import supported, error
+from como.core import cmd_save, cmd_reset, cmd_data, cmd_info, cmd_import, cmd_export, \
     cmd_upload, cmd_open, auto_save, auto_upload
 
 

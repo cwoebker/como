@@ -14,9 +14,10 @@ import hashlib
 from clint.textui import puts, colored, indent
 from tablib import Dataset
 
-from .battery import get_battery, get_age
-from .settings import COMO_BATTERY_FILE, SERVER_URL
-from .help import is_osx, is_lin, is_win, spark_string, warning, error, title
+from como.battery import get_battery, get_age
+from como.settings import COMO_BATTERY_FILE, SERVER_URL
+from como.help import is_osx, is_lin, is_win, spark_string, \
+    warning, error, title, info, msg
 
 if is_lin:
     from crontab import CronTab
