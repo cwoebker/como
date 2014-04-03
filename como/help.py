@@ -5,7 +5,9 @@ como.help - various stuff that helps
 
 import platform
 from clint.textui import colored, puts, indent
+from clint import arguments
 
+args = arguments.Args()
 
 system = platform.system().lower()
 

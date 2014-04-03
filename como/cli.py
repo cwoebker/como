@@ -5,12 +5,11 @@ como.cli - command line stuff
 
 import sys
 
-from clint import args
 from clint.textui import colored, puts
 
 from .core import ExitStatus
 from como import __version__
-from como.help import supported, error
+from como.help import supported, error, args
 from como.core import cmd_save, cmd_reset, cmd_data, cmd_info, cmd_import, cmd_export, \
     cmd_upload, cmd_open, auto_save, auto_upload
 

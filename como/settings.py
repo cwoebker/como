@@ -5,7 +5,7 @@ como.settings - some global variables
 
 import os
 
-from clint import args
+from como.help import args
 
 LOCATION_CODES = [
     '1C', '2Z', '4H', '5K', '8H', '5D', '7J', 'CK', 'E', 'EE',
