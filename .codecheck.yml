@@ -8,6 +8,9 @@ pep8:
     disable:
         - test2
         - lsdjkf
+pyflakes:
+    disable:
+        - UnusedImport
 
 conventions:
     variable:
