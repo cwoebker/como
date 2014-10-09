@@ -1,7 +1,7 @@
 language: python
 
 pylint:
-    disable: 
+    disable:
         - test
         - hsdf
 pep8:
@@ -21,4 +21,7 @@ conventions:
 
 complexity:
     cc_threshold: 14
+
+ignore:
+    - fabfile.py
 
