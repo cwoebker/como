@@ -4,5 +4,5 @@ como: batteries complete
 """
 
 __author__ = 'cwoebker'
-__version__ = '0.5.0.1'
+__version__ = '0.5.1'
 __licence__ = 'BSD'
