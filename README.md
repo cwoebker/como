@@ -4,6 +4,8 @@
 
 [![Status unavailable](https://secure.travis-ci.org/cwoebker/como.png?branch=master)](http://travis-ci.org/cwoebker/como)
 
+[![Code Issues](http://www.quantifiedcode.com/project/1f1860b33ca44bfcb1e01e15e8a8e99d/badge.svg)](http://www.quantifiedcode.com/app#/project/1f1860b33ca44bfcb1e01e15e8a8e99d)
+
 ---
 
 ## Naming ##
