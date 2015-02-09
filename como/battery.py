@@ -3,6 +3,8 @@
 como.battery - the power connection
 """
 
+# http://www.macrumors.com/2010/04/16/apple-tweaks-serial-number-format-with-new-macbook-pro/
+
 import sys
 from datetime import date, datetime
 
@@ -38,10 +40,15 @@ def get_age():
         serial['number'] = subprocess.check_output(
             cmd, shell=True).translate(None, '\n')
         temp = serial['number']
-        for code in LOCATION_CODES:
-            temp = temp.lstrip(code)
-        serial['year'] = int(temp[0])
-        serial['week'] = int(temp[1:3])
+        if len(temp) == 11:
+            for code in LOCATION_CODES:
+                temp = temp.lstrip(code)
+            serial['year'] = int(temp[0])
+            serial['week'] = int(temp[1:3])
+        else:
+            serial['year'] = 0
+            serial['week'] = 0
+            return "N/A"
 
         creation = str(date.today().year)[:-1] + str(
             serial['year']) + str(serial['week']) + "1"
