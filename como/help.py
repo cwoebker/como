@@ -3,17 +3,12 @@
 como.help - various stuff that helps
 """
 
-import platform
+from paxo.util import is_lin, is_win, is_osx
 from clint.textui import colored, puts, indent
 from clint import arguments
 
 args = arguments.Args()
 
-system = platform.system().lower()
-
-is_osx = (system == 'darwin')
-is_win = (system == 'windows')
-is_lin = (system == 'linux')
 supported = is_lin or is_osx or is_win
 
 # www.github.com/kennethreitz/spark.py - this code is taken from kennethreitz

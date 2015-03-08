@@ -10,7 +10,7 @@ from datetime import date, datetime
 
 from clint.textui import puts
 
-from .help import is_osx, is_lin, is_win
+from paxo.util import is_osx, is_lin, is_win
 from como.settings import LOCATION_CODES
 
 # OS dependent imports

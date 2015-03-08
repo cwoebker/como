@@ -5,7 +5,7 @@ como.settings - some global variables
 
 import os
 
-from como.help import args
+from paxo.util import DEBUG_MODE
 
 LOCATION_CODES = [
     '1C', '2Z', '4H', '5K', '8H', '5D', '7J', 'CK', 'E', 'EE',
@@ -17,7 +17,7 @@ DEV_URL = 'http://127.0.0.1:5000'
 REAL_URL = 'http://como.cwoebker.com'
 COMO_BATTERY_FILE = os.path.expanduser('~/.como')
 
-if args.contains(('-d', '--dev')):
+if DEBUG_MODE:
     SERVER_URL = DEV_URL
 else:
     SERVER_URL = REAL_URL
