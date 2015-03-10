@@ -1,5 +1,11 @@
 # History #
 
+## 0.6.0 ##
+
+*March 24th 2015*
+
+- 
+
 ## 0.5.0-beta ##
 
 *January 16th 2013*

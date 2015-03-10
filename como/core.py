@@ -14,22 +14,18 @@ import hashlib
 from clint.textui import puts, colored, indent
 from tablib import Dataset
 
+from paxo.command import cmd
+from paxo.util import is_osx, is_lin, is_win
+from paxo.text import spark_string, message, info, title, warning, error
+
 from como.battery import get_battery, get_age
 from como.settings import COMO_BATTERY_FILE, SERVER_URL
-from como.help import is_osx, is_lin, is_win, spark_string, \
-    warning, error, title, info, msg
 
 if is_lin:
     from crontab import CronTab
 
 if is_osx:
     import requests
-
-
-class ExitStatus:
-    """Exit status code constants."""
-    OK = 0
-    ERROR = 1
 
 
 def create_database():
@@ -174,6 +170,7 @@ def auto_save():
         error("Sorry there is no auto-upload for windows.")
 
 
+@cmd(help="Save battery information to database.")
 def cmd_save(args):
     bat = get_battery()
 
@@ -192,9 +189,10 @@ def cmd_save(args):
     with open(COMO_BATTERY_FILE, 'w') as como:
         como.write(zlib.compress(data.json))
 
-    msg("battery info saved (%s)" % str(data['time'][-1]))
+    message("battery info saved (%s)" % str(data['time'][-1]))
 
 
+@cmd(help="Delete database.")
 def cmd_reset(args):
     if os.path.exists(COMO_BATTERY_FILE):
         sure = raw_input("Are you sure? this will remove everything! [y/n] ")
@@ -205,6 +203,7 @@ def cmd_reset(args):
         warning("no como database")
 
 
+@cmd(help="Show database information.")
 def cmd_data(args):
     if not os.path.exists(COMO_BATTERY_FILE):
         puts(colored.yellow("No como database."))
@@ -236,14 +235,13 @@ def cmd_data(args):
                 ]
                 text1 = str(spark_string(history).encode('utf-8'))
                 text2 = str(spark_string(cycles).encode('utf-8'))
-                #print type('Star ★')
-                #puts(columns([colored.yellow('Star ★'), 10]))
                 warning("Capacity:")
                 puts(text1)
                 warning("Cycles:")
                 puts(text2)
 
 
+@cmd(help="Show battery information.")
 def cmd_info(args):
     title("Como Info")
 
@@ -279,6 +277,7 @@ def import_format(element):
     return element
 
 
+@cmd(help="Import data from .csv file.", usage="import <file>")
 def cmd_import(args):
     if not os.path.exists(COMO_BATTERY_FILE):
         current_dataset = create_database()
@@ -299,22 +298,24 @@ def cmd_import(args):
         error("Couldn't open file: %s" % args.get(0))
 
 
+@cmd(help="Export data to local .csv file.")
 def cmd_export(args):
     if not os.path.exists(COMO_BATTERY_FILE):
         error("No como database.")
     else:
         if os.path.exists("como.csv"):
             sure = raw_input(
-                "Do you want to replace the old export file?" +
+                "Do you want to replace the old export file (como.csv)?" +
                 " [y/n] ")
             if sure != 'y':
                 return
         dataset = read_database()
         with open("como.csv", "w") as como:
             como.write(dataset.csv)
-        msg("saved file to current directory")
+        message("saved file to current directory")
 
 
+@cmd(help="Upload data to server.")
 def cmd_upload(args):
     if not os.path.exists(COMO_BATTERY_FILE):
         error("No como database.")
@@ -342,11 +343,27 @@ def cmd_upload(args):
             else:
                 puts("upload failed")
         else:
-            msg("no uploading on this operating system")
+            message("no uploading on this operating system")
 
 
+@cmd(help="Open your battery page.")
 def cmd_open(args):
     cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ " + \
           "{ split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
     out = subprocess.check_output(cmd, shell=True).translate(None, '\n')
     os.system("open %s/battery?id=%s" % (SERVER_URL, out))
+
+
+@cmd(help="Initialize como.")
+def cmd_init(args):
+    cmd_save(args)
+    cmd_automate(args)
+    cmd_save(args)  # double save so user sees actual graph on site
+    cmd_upload(args)
+    cmd_open(args)
+
+
+@cmd(help="Automate saving and uploading.")
+def cmd_automate(args):
+    auto_save()
+    auto_upload()
