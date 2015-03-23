@@ -2,11 +2,17 @@
 
 ## 0.6.0 ##
 
-*March 24th 2015*
+*March 23rd 2015*
 
-- 
+- Using the "paxo" command line library
 
-## 0.5.0-beta ##
+## 0.5.1 ##
+
+*February 9th 2015*
+
+- Fixed an issue where como wouldn't work due to the new Mac serial format
+
+## 0.5.0 ##
 
 *January 16th 2013*
 
