@@ -5,8 +5,7 @@ como.cli - command line stuff
 
 import sys
 
-
-from paxo import Paxo
+from paxo.core import Paxo
 from paxo.util import is_lin, is_win, is_osx, ExitStatus
 from paxo.text import error
 
