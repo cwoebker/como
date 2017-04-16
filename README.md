@@ -3,6 +3,7 @@
 [`como`](https://github.com/cwoebker/como) is a minimalistic utillity to monitor your battery.
 
 [![Status unavailable](https://secure.travis-ci.org/cwoebker/como.png?branch=master)](http://travis-ci.org/cwoebker/como)
+![Code Quality](http://www.quantifiedcode.com/project/785b2e321bff4275bdf6135f3075cc10/badge.svg)
 
 [![Code Issues](http://www.quantifiedcode.com/project/1f1860b33ca44bfcb1e01e15e8a8e99d/badge.svg)](http://www.quantifiedcode.com/app#/project/1f1860b33ca44bfcb1e01e15e8a8e99d)
 
