@@ -14,7 +14,7 @@ LOCATION_CODES = [
 ]
 
 DEV_URL = 'http://127.0.0.1:5000'
-REAL_URL = 'http://como.cwoebker.com'
+REAL_URL = 'https://como.cwoebker.com'
 COMO_BATTERY_FILE = os.path.expanduser('~/.como')
 
 if DEBUG_MODE:
