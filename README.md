@@ -2,9 +2,11 @@
 
 [`como`](https://github.com/cwoebker/como) is a minimalistic utillity to monitor your battery.
 
-[![Status unavailable](https://secure.travis-ci.org/cwoebker/como.png?branch=master)](http://travis-ci.org/cwoebker/como)
-
-[![Code Issues](http://www.quantifiedcode.com/project/1f1860b33ca44bfcb1e01e15e8a8e99d/badge.svg)](http://www.quantifiedcode.com/app#/project/1f1860b33ca44bfcb1e01e15e8a8e99d)
+[![PyPI Version](https://img.shields.io/pypi/v/penpal.svg)](https://pypi.python.org/pypi/como)
+[![Build Status](https://secure.travis-ci.org/cwoebker/como.png?branch=master)](http://travis-ci.org/cwoebker/como)
+[![PyPI License](https://img.shields.io/pypi/l/como.svg)](https://pypi.python.org/pypi/como)
+[![PyPI Python Versions](https://img.shields.io/pypi/pyversions/como.svg)](https://pypi.python.org/pypi/como)
+[![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/cwoebker)
 
 ---
 
@@ -19,11 +21,17 @@ and since he invented the battery I thought it would be a great name.
 
 ## What is this? ##
 
-With como you can check out how your battery is doing. You can easily `automate` this process so that you don't need to worry about it. Every once in a while you can quickly check out your battery `info`. You can `export` this data into the portable `.csv` format and `import` it again later. You can even import data form another battery utility such as [coconutBattery](http://http://www.coconut-flavour.com).
+With como you can check out how your battery is doing.
+You can easily `automate` this process so that you don't need to worry about it. 
+Every once in a while you can quickly check out your battery `info`.
+You can `export` this data into the portable `.csv` format and `import` it again later.
+You can even import data form another battery utility such as [coconutBattery](http://www.coconut-flavour.com).
 
-## [como.cwoebker.com](http://como.cwoebker.com) ##
+## [como.cwoebker.com](https://como.cwoebker.com) ##
 
-Most importantly you can take all this to the next level, if you choose to do so. `Upload` your battery data to the como web application to check everything out in a nice interface wherever you are. You can always easily `open` your computer's personal page.
+Most importantly you can take all this to the next level, if you choose to do so.
+`Upload` your battery data to the como web application to check everything out in a nice interface wherever you are. 
+You can always easily `open` your computer's personal page.
 
 ## Installation
 
@@ -59,8 +67,7 @@ Afterwards run the `init` command to get everything setup and stop worrying.
 ## Advanced
 
 `como` stores all battery information (with zlib compression) in the file `~/.como`.
-You are free to do whatever you want with the data in that file,
-its yours after all.
+You are free to do whatever you want with this data, it is yours after all.
 
 So go out there and hack some code!
 
@@ -76,15 +83,15 @@ So go out there and hack some code!
 
 ## Contribute
 
-[Fork and contribute!](http://github.com/cwoebker/como)
+[Fork and contribute!](https://github.com/cwoebker/como)
 
 ---
 
-For questions and suggestions, feel free to shoot me an email <me@cwoebker.com>
+For questions and suggestions, feel free to shoot me an email at <me@cwoebker.com>.
 
-Follow [@cwoebker](http://twitter.com/cwoebker)
+Also, follow or tweet [@cwoebker](https://twitter.com/cwoebker).
 
 ---
 
-Copyright (c) 2012-2015, Cecil Woebker.
+Copyright (c) 2012-2018, Cecil Woebker.
 License: BSD (see LICENSE for details)
