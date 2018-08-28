@@ -1,5 +1,12 @@
 # History #
 
+## 0.6.1 ##
+
+**August 28th 2018**
+
+- Using XDG_DATA_HOME for como data file
+- Quick fix so como works with current Mac computers
+
 ## 0.6.0 ##
 
 *March 23rd 2015*
