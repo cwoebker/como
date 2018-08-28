@@ -258,7 +258,7 @@ def cmd_info(args):
             puts("Mac model: %s" % subprocess.check_output(
                 "sysctl -n hw.model", shell=True).rstrip("\n"))
             puts("Age of Computer: %s months" % get_age())
-            puts("Temperature: %s ℃" % (int(bat['temp']) / 100.))
+            # puts("Temperature: %s ℃" % (int(bat['temp']) / 100.))
         if is_osx or is_win:
             puts("Voltage: %s" % bat['voltage'])
             puts("Amperage: %s" % bat['amperage'])

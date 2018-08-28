@@ -93,5 +93,5 @@ Also, follow or tweet [@cwoebker](https://twitter.com/cwoebker).
 
 ---
 
-Copyright (c) 2012-2018, Cecil Woebker.
+Copyright (c) 2012-2018, Cecil Wöbker.
 License: BSD (see LICENSE for details)

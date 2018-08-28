@@ -77,12 +77,13 @@ def get_battery():
         battery['serial'] = subprocess.check_output(
             'ioreg -w0 -l | grep BatterySerialNumber',
             shell=True).translate(None, '\n "|').lstrip('BatterySerialNumber=')
-        battery['temp'] = int(subprocess.check_output(
-            'ioreg -w0 -l | grep Temperature',
-            shell=True).translate(None, '\n "|').lstrip('Temperature='))
-        battery['maxcap'] = int(bat[0].lstrip('MaxCapacity='))
-        battery['curcap'] = int(bat[1].lstrip('CurrentCapacity='))
-        legacy = bat[2].lstrip('LegacyBatteryInfo=')
+        # battery['temp'] = int(subprocess.check_output(
+        #     'ioreg -w0 -l | grep Temperature',
+        #     shell=True).translate(None, '\n "|').lstrip('Temperature='))
+        battery['maxcap'] = int(bat[1].lstrip('MaxCapacity='))
+        battery['curcap'] = int(bat[2].lstrip('CurrentCapacity='))
+        legacy = bat[3].lstrip('LegacyBatteryInfo=')
+        battery['designcap'] = int(bat[4].lstrip('DesignCapacity='))
         battery['cycles'] = int(
             legacy.translate(
                 None, '{}=').split(',')[5].lstrip('CycleCount'))
@@ -94,7 +95,6 @@ def get_battery():
         battery['voltage'] = int(
             legacy.translate(
                 None, '{}=').split(',')[4].lstrip('Voltage'))
-        battery['designcap'] = int(bat[3].lstrip('DesignCapacity='))
     elif is_lin:
         battery['serial'] = subprocess.check_output(
             "grep \"^serial number\" " +

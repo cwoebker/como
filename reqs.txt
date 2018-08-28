@@ -1,6 +1,0 @@
-paxo
-python-dateutil
-clint
-python-crontab
-tablib
-requests
