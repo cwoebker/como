@@ -205,6 +205,7 @@ def cmd_reset(args):
 
 @cmd(help="Show database information.")
 def cmd_data(args):
+    # TODO: Update so that graphs are based on a time axis and not on the number of saves
     if not os.path.exists(COMO_BATTERY_FILE):
         puts(colored.yellow("No como database."))
     else:
@@ -317,6 +318,7 @@ def cmd_export(args):
 
 @cmd(help="Upload data to server.")
 def cmd_upload(args):
+    # TODO: fix upload to web interface
     if not os.path.exists(COMO_BATTERY_FILE):
         error("No como database.")
     else:

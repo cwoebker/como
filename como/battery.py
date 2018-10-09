@@ -6,6 +6,7 @@ como.battery - the power connection
 # http://www.macrumors.com/2010/04/16/apple-tweaks-serial-number-format-with-new-macbook-pro/
 
 import sys
+import platform
 from datetime import date, datetime
 
 from clint.textui import puts
@@ -71,6 +72,9 @@ def get_battery():
     system sources"""
     battery = {}
     if is_osx:
+        raw_osx_version, _, _ = platform.mac_ver()
+        osx_version = str('.'.join(raw_osx_version.split('.')[:2]))
+        # TODO: evaluate other sources like: system_profiler SPPowerDataType | grep "Cycle Count" | awk '{print $3}'
         bat = subprocess.check_output(
             'ioreg -w0 -l | grep Capacity',
             shell=True).translate(None, ' "|').split('\n')
@@ -80,20 +84,26 @@ def get_battery():
         # battery['temp'] = int(subprocess.check_output(
         #     'ioreg -w0 -l | grep Temperature',
         #     shell=True).translate(None, '\n "|').lstrip('Temperature='))
-        battery['maxcap'] = int(bat[1].lstrip('MaxCapacity='))
-        battery['curcap'] = int(bat[2].lstrip('CurrentCapacity='))
-        legacy = bat[3].lstrip('LegacyBatteryInfo=')
-        battery['designcap'] = int(bat[4].lstrip('DesignCapacity='))
+        if osx_version == "10.14":
+            battery['maxcap'] = int(bat[3].lstrip('MaxCapacity='))
+            battery['curcap'] = int(bat[4].lstrip('CurrentCapacity='))
+            battery['legacy'] = bat[5].lstrip('LegacyBatteryInfo=')
+            battery['designcap'] = int(bat[6].lstrip('DesignCapacity='))
+        else:
+            battery['maxcap'] = int(bat[1].lstrip('MaxCapacity='))
+            battery['curcap'] = int(bat[2].lstrip('CurrentCapacity='))
+            battery['legacy'] = bat[3].lstrip('LegacyBatteryInfo=')
+            battery['designcap'] = int(bat[4].lstrip('DesignCapacity='))
         battery['cycles'] = int(
-            legacy.translate(
+            battery['legacy'].translate(
                 None, '{}=').split(',')[5].lstrip('CycleCount'))
         battery['amperage'] = int(
-            legacy.translate(
+            battery['legacy'].translate(
                 None, '{}=').split(',')[0].lstrip('Amperage'))
         if battery['amperage'] > 999999:
             battery['amperage'] -= 18446744073709551615
         battery['voltage'] = int(
-            legacy.translate(
+            battery['legacy'].translate(
                 None, '{}=').split(',')[4].lstrip('Voltage'))
     elif is_lin:
         battery['serial'] = subprocess.check_output(

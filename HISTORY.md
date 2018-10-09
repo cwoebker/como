@@ -1,11 +1,17 @@
 # History #
 
+## 0.6.2 ##
+
+*October 9th 2018*
+
+- Add support for MacOS Mojave
+
 ## 0.6.1 ##
 
-**August 28th 2018**
+*August 28th 2018*
 
 - Using XDG_DATA_HOME for como data file
-- Quick fix so como works with current Mac computers
+- Quick fix so that como works with current Mac computers
 
 ## 0.6.0 ##
 
