@@ -23,12 +23,12 @@ if is_win:
     try:
         import win32api
     except ImportError:
-        print "The windows python api isn't installed. Please install pywin32."
+        print("The windows python api isn't installed. Please install pywin32.")
         sys.exit(1)
     try:
         import wmi
     except ImportError:
-        print "Make sure wmi is installed."
+        print("Make sure wmi is installed.")
         sys.exit(1)
 
 
@@ -39,7 +39,7 @@ def get_age():
         cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ " + \
               "{ split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
         serial['number'] = subprocess.check_output(
-            cmd, shell=True).translate(None, '\n')
+            cmd, shell=True).translate(None, b'\n')
         temp = serial['number']
         if len(temp) == 11:
             for code in LOCATION_CODES:
@@ -75,42 +75,47 @@ def get_battery():
         raw_osx_version, _, _ = platform.mac_ver()
         osx_version = str('.'.join(raw_osx_version.split('.')[:2]))
         # TODO: evaluate other sources like: system_profiler SPPowerDataType | grep "Cycle Count" | awk '{print $3}'
-        bat = subprocess.check_output(
-            'ioreg -w0 -l | grep Capacity',
-            shell=True).translate(None, ' "|').split('\n')
+        tmp = subprocess.check_output('ioreg -w0 -l | grep Capacity', shell=True)
+        bat = tmp.translate(None, b' "|').split(b'\n')
         battery['serial'] = subprocess.check_output(
             'ioreg -w0 -l | grep BatterySerialNumber',
-            shell=True).translate(None, '\n "|').lstrip('BatterySerialNumber=')
+            shell=True
+        ).translate(None, b'\n "|').lstrip(b'BatterySerialNumber=')
         # battery['temp'] = int(subprocess.check_output(
         #     'ioreg -w0 -l | grep Temperature',
         #     shell=True).translate(None, '\n "|').lstrip('Temperature='))
-        if osx_version == "10.14":
-            battery['maxcap'] = int(bat[3].lstrip('MaxCapacity='))
-            battery['curcap'] = int(bat[4].lstrip('CurrentCapacity='))
-            battery['legacy'] = bat[5].lstrip('LegacyBatteryInfo=')
-            battery['designcap'] = int(bat[6].lstrip('DesignCapacity='))
+        if osx_version == "10.15":
+            battery['maxcap'] = int(bat[3].lstrip(b'MaxCapacity='))
+            battery['curcap'] = int(bat[4].lstrip(b'CurrentCapacity='))
+            battery['legacy'] = bat[5].lstrip(b'LegacyBatteryInfo=')
+            battery['designcap'] = int(bat[7].lstrip(b'DesignCapacity='))
+        elif osx_version == "10.14":
+            battery['maxcap'] = int(bat[3].lstrip(b'MaxCapacity='))
+            battery['curcap'] = int(bat[4].lstrip(b'CurrentCapacity='))
+            battery['legacy'] = bat[5].lstrip(b'LegacyBatteryInfo=')
+            battery['designcap'] = int(bat[6].lstrip(b'DesignCapacity='))
         else:
-            battery['maxcap'] = int(bat[1].lstrip('MaxCapacity='))
-            battery['curcap'] = int(bat[2].lstrip('CurrentCapacity='))
-            battery['legacy'] = bat[3].lstrip('LegacyBatteryInfo=')
-            battery['designcap'] = int(bat[4].lstrip('DesignCapacity='))
+            battery['maxcap'] = int(bat[1].lstrip(b'MaxCapacity='))
+            battery['curcap'] = int(bat[2].lstrip(b'CurrentCapacity='))
+            battery['legacy'] = bat[3].lstrip(b'LegacyBatteryInfo=')
+            battery['designcap'] = int(bat[4].lstrip(b'DesignCapacity='))
         battery['cycles'] = int(
             battery['legacy'].translate(
-                None, '{}=').split(',')[5].lstrip('CycleCount'))
+                None, b'{}=').split(b',')[5].lstrip(b'CycleCount'))
         battery['amperage'] = int(
             battery['legacy'].translate(
-                None, '{}=').split(',')[0].lstrip('Amperage'))
+                None, b'{}=').split(b',')[0].lstrip(b'Amperage'))
         if battery['amperage'] > 999999:
             battery['amperage'] -= 18446744073709551615
         battery['voltage'] = int(
             battery['legacy'].translate(
-                None, '{}=').split(',')[4].lstrip('Voltage'))
+                None, b'{}=').split(b',')[4].lstrip(b'Voltage'))
     elif is_lin:
         battery['serial'] = subprocess.check_output(
             "grep \"^serial number\" " +
             "/proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
             shell=True
-        ).translate(None, '\n')
+        ).translate(None, b'\n')
         battery['state'] = subprocess.check_output(
             "grep \"^charging state\" " +
             "/proc/acpi/battery/BAT0/state | awk '{ print $3 }'",

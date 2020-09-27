@@ -7,12 +7,13 @@ name = "pypi"
 
 [packages]
 
-paxo = ">=0.2.1"
+paxo = ">=0.3.0"
 python-dateutil = "*"
 python-crontab = "*"
 tablib = "*"
 requests = "*"
 
-
 [dev-packages]
 
+wheel = "*"
+twine = "*"

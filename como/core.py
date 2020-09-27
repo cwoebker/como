@@ -30,12 +30,12 @@ if is_osx:
 
 def create_database():
     warning("Creating ~/.como")
-    open(COMO_BATTERY_FILE, 'w').close()
+    open(COMO_BATTERY_FILE, 'wb').close()
     return Dataset(headers=['time', 'capacity', 'cycles'])
 
 
 def read_database():
-    with open(COMO_BATTERY_FILE, 'r') as como:
+    with open(COMO_BATTERY_FILE, 'rb') as como:
         data = Dataset(headers=['time', 'capacity', 'cycles'])
         # http://stackoverflow.com/questions/10206905/
         # how-to-convert-json-string-to-dictionary-and-save-order-in-keys
@@ -186,8 +186,8 @@ def cmd_save(args):
         bat['cycles'],
     ])
 
-    with open(COMO_BATTERY_FILE, 'w') as como:
-        como.write(zlib.compress(data.json))
+    with open(COMO_BATTERY_FILE, 'wb') as como:
+        como.write(zlib.compress(data.json.encode('utf-8')))
 
     message("battery info saved (%s)" % str(data['time'][-1]))
 
@@ -195,7 +195,7 @@ def cmd_save(args):
 @cmd(help="Delete database.")
 def cmd_reset(args):
     if os.path.exists(COMO_BATTERY_FILE):
-        sure = raw_input("Are you sure? this will remove everything! [y/n] ")
+        sure = input("Are you sure? this will remove everything! [y/n] ")
         if sure == "y":
             os.remove(COMO_BATTERY_FILE)
             info("removed database")
@@ -234,8 +234,8 @@ def cmd_data(args):
                     c - min(c for c in cycles if type(c) == int)
                     if type(c) == int else c for c in cycles
                 ]
-                text1 = str(spark_string(history).encode('utf-8'))
-                text2 = str(spark_string(cycles).encode('utf-8'))
+                text1 = str(spark_string(history))
+                text2 = str(spark_string(cycles))
                 warning("Capacity:")
                 puts(text1)
                 warning("Cycles:")
@@ -257,7 +257,7 @@ def cmd_info(args):
             puts("Design Capacity: %s" % bat['designcap'])
         if is_osx:
             puts("Mac model: %s" % subprocess.check_output(
-                "sysctl -n hw.model", shell=True).rstrip("\n"))
+                "sysctl -n hw.model", shell=True).rstrip(b"\n"))
             puts("Age of Computer: %s months" % get_age())
             # puts("Temperature: %s ℃" % (int(bat['temp']) / 100.))
         if is_osx or is_win:
@@ -291,8 +291,8 @@ def cmd_import(args):
         import_dataset.dict = map(import_format, import_dataset.dict)
         new = current_dataset.stack(import_dataset).sort('time')
 
-        with open(COMO_BATTERY_FILE, 'w') as como:
-            como.write(zlib.compress(new.json))
+        with open(COMO_BATTERY_FILE, 'wb') as como:
+            como.write(zlib.compress(new.json.encode('utf-8')))
 
         puts(colored.white("battery statistics imported"))
     else:
@@ -305,7 +305,7 @@ def cmd_export(args):
         error("No como database.")
     else:
         if os.path.exists("como.csv"):
-            sure = raw_input(
+            sure = input(
                 "Do you want to replace the old export file (como.csv)?" +
                 " [y/n] ")
             if sure != 'y':
@@ -327,10 +327,10 @@ def cmd_upload(args):
             cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ " + \
                   "{ split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
             computer_serial = subprocess.check_output(
-                cmd, shell=True).translate(None, '\n')
+                cmd, shell=True).translate(None, b'\n')
             bat = get_battery()
             model = subprocess.check_output(
-                "sysctl -n hw.model", shell=True).rstrip("\n")
+                "sysctl -n hw.model", shell=True).rstrip(b"\n")
             data = {
                 'computer': hashlib.md5(computer_serial).hexdigest(),
                 'model': model,

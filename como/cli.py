@@ -14,7 +14,7 @@ supported = is_lin or is_osx or is_win
 from como import __version__
 from como.core import cmd_save
 
-app = Paxo('como', 'a Cecil Woebker project.', '<command>',
+app = Paxo('como', 'by Cecil Wöbker.', '<command>',
            __version__, default_action=cmd_save)
 
 
