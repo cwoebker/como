@@ -7,4 +7,4 @@ if sys.platform == "win32":
 else:
     _data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
 
-COMO_BATTERY_FILE = _data_home / "como" / "como"
+COMO_BATTERY_FILE = _data_home / "como" / "como.db"
