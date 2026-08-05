@@ -53,6 +53,17 @@ uv run pytest             # run tests with coverage
 uv run pre-commit install # enable ruff + ty pre-commit hooks
 ```
 
+## Releasing
+
+Releases are automated via GitHub Actions:
+
+1. Run the **Bump version** workflow (`Actions` → `Bump version` → `Run workflow`, choose `patch`/`minor`/`major`). It bumps `pyproject.toml`/`uv.lock`, commits, tags (`vX.Y.Z`), and triggers the release workflow.
+2. The **Release** workflow (`.github/workflows/release.yml`) then builds the sdist/wheel, runs the test suite, publishes to PyPI, and creates a GitHub Release with the built artifacts attached and notes drawn from `HISTORY.md` (falling back to GitHub's auto-generated notes).
+
+Pushing a `v*.*.*` tag directly also triggers the release workflow, so a manual `git tag vX.Y.Z && git push origin vX.Y.Z` works too.
+
+Publishing to PyPI uses [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC) — no API token is stored in the repo. This requires a one-time setup on PyPI: on the [`como` project's](https://pypi.org/manage/project/como/publishing/) publishing settings, add a trusted publisher for this repository, workflow `release.yml`, and environment `pypi`.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
