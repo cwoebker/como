@@ -8,6 +8,7 @@ import click
 
 from como import __version__
 from como.core import (
+    ComoError,
     cmd_automate,
     cmd_data,
     cmd_export,
@@ -29,25 +30,42 @@ def main(ctx: click.Context) -> None:
         click.echo(f"Unsupported platform: {sys.platform}", err=True)
         sys.exit(1)
     if ctx.invoked_subcommand is None:
-        cmd_save()
+        try:
+            cmd_save()
+        except (ComoError, RuntimeError) as e:
+            raise click.ClickException(str(e)) from e
 
 
 @main.command()
 def save() -> None:
     """Save current battery state to the database."""
-    cmd_save()
+    try:
+        cmd_save()
+    except (ComoError, RuntimeError) as e:
+        raise click.ClickException(str(e)) from e
 
 
 @main.command()
 def info() -> None:
     """Show current battery information."""
-    cmd_info()
+    try:
+        cmd_info()
+    except (ComoError, RuntimeError) as e:
+        raise click.ClickException(str(e)) from e
 
 
 @main.command()
-def data() -> None:
+@click.option(
+    "--since",
+    default=None,
+    help="Limit to entries from the last N periods (e.g. 30d, 4w, 6m, 1y).",
+)
+def data(since: str | None) -> None:
     """Show database stats and history graphs."""
-    cmd_data()
+    try:
+        cmd_data(since=since)
+    except (ComoError, RuntimeError) as e:
+        raise click.ClickException(str(e)) from e
 
 
 @main.command()
@@ -60,13 +78,19 @@ def reset() -> None:
 @click.argument("file", type=click.Path(exists=True))
 def import_data(file: str) -> None:
     """Import battery data from a CSV file."""
-    cmd_import(file)
+    try:
+        cmd_import(file)
+    except (ComoError, RuntimeError) as e:
+        raise click.ClickException(str(e)) from e
 
 
 @main.command(name="export")
 def export_data() -> None:
     """Export database to como.csv in the current directory."""
-    cmd_export()
+    try:
+        cmd_export()
+    except (ComoError, RuntimeError) as e:
+        raise click.ClickException(str(e)) from e
 
 
 @main.command()

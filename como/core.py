@@ -4,19 +4,20 @@ como.core - database operations and scheduling
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 import sys
 import zlib
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import tablib
 from rich.console import Console
 from tablib import Dataset
 
-from como.battery import get_battery
+from como.battery import get_batteries, get_battery
 from como.settings import COMO_BATTERY_FILE
 
 if sys.platform == "linux":
@@ -25,6 +26,10 @@ if sys.platform == "linux":
 console = Console()
 
 _SPARKS = "▁▂▃▄▅▆▇█"
+
+
+class ComoError(Exception):
+    """User-facing error that should exit with a non-zero status."""
 
 
 def sparkline(values: Sequence[int | float]) -> str:
@@ -85,25 +90,41 @@ def cmd_save() -> None:
 
 
 def cmd_info() -> None:
-    bat = get_battery()
+    batteries = get_batteries()
+    multi = len(batteries) > 1
 
-    console.print("\n[bold cyan]Battery Info[/bold cyan]")
-    console.print(f"  Serial:           {bat['serial'] or 'N/A'}")
-    console.print(f"  Max Capacity:     {bat['maxcap']}")
-    console.print(f"  Current Capacity: {bat['curcap']}")
+    header = f"Battery Info ({len(batteries)} batteries)" if multi else "Battery Info"
+    console.print(f"\n[bold cyan]{header}[/bold cyan]")
 
-    # Truthiness, not "is not None": flaky hardware can report 0 here.
-    if bat["designcap"]:
-        health = bat["maxcap"] / bat["designcap"] * 100
-        console.print(
-            f"  Design Capacity:  {bat['designcap']}"
-            f"  ([green]{health:.1f}% health[/green])"
-        )
+    for i, bat in enumerate(batteries):
+        if multi:
+            console.print(f"\n  [bold]Battery {i}[/bold]")
+        pad = "    " if multi else "  "
 
-    if bat["cycles"] is not None:
-        console.print(f"  Cycle Count:      {bat['cycles']}")
-    else:
-        console.print("  Cycle Count:      N/A")
+        console.print(f"{pad}Serial:           {bat['serial'] or 'N/A'}")
+        console.print(f"{pad}Max Capacity:     {bat['maxcap']}")
+        console.print(f"{pad}Current Capacity: {bat['curcap']}")
+
+        if bat["designcap"] is not None:
+            health = bat["maxcap"] / bat["designcap"] * 100
+            console.print(
+                f"{pad}Design Capacity:  {bat['designcap']}"
+                f"  ([green]{health:.1f}% health[/green])"
+            )
+
+        if bat["cycles"] is not None:
+            console.print(f"{pad}Cycle Count:      {bat['cycles']}")
+        else:
+            console.print(f"{pad}Cycle Count:      N/A")
+
+        if bat["voltage_mv"] is not None:
+            console.print(f"{pad}Voltage:          {bat['voltage_mv']} mV")
+
+        if bat["power_mw"] is not None and bat["is_charging"] is not None:
+            direction = "charging" if bat["is_charging"] else "discharging"
+            console.print(
+                f"{pad}Power:            {bat['power_mw'] / 1000:.2f} W ({direction})"
+            )
 
     if sys.platform == "darwin":
         model = (
@@ -115,21 +136,37 @@ def cmd_info() -> None:
         )
         console.print(f"  Model:            {model}")
 
-    if bat["voltage_mv"] is not None:
-        console.print(f"  Voltage:          {bat['voltage_mv']} mV")
 
-    if bat["current_ma"] is not None and bat["voltage_mv"] is not None:
-        watts = abs(bat["voltage_mv"] * bat["current_ma"]) / 1_000_000
-        direction = "charging" if bat["current_ma"] >= 0 else "discharging"
-        console.print(f"  Power:            {watts:.2f} W ({direction})")
+def _parse_since(s: str) -> datetime:
+    m = re.fullmatch(r"(\d+)([dwmy])", s)
+    if not m:
+        raise ComoError(f"Invalid --since value {s!r}. Use e.g. 30d, 4w, 6m, 1y.")
+    n, unit = int(m.group(1)), m.group(2)
+    days = {"d": n, "w": n * 7, "m": n * 30, "y": n * 365}[unit]
+    return datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
 
 
-def cmd_data() -> None:
+def _filter_since(data: Dataset, cutoff: datetime) -> Dataset:
+    filtered = Dataset(headers=["time", "capacity", "cycles"])
+    for row in data:
+        ts = datetime.strptime(str(row[0]), "%Y-%m-%dT%H:%M:%S")
+        if ts >= cutoff:
+            filtered.append(list(row))
+    return filtered
+
+
+def cmd_data(since: str | None = None) -> None:
     if not COMO_BATTERY_FILE.exists():
-        console.print("[yellow]No como database.[/yellow]")
-        return
+        raise ComoError("No como database.")
 
     data = read_database()
+
+    if since is not None:
+        cutoff = _parse_since(since)
+        data = _filter_since(data, cutoff)
+        if len(data) == 0:
+            raise ComoError(f"No entries in the database within the last {since}.")
+
     console.print("\n[bold cyan]Como Database[/bold cyan]")
     console.print(f"  Entries:    {len(data)}")
     console.print(f"  First save: {data['time'][0]}")
@@ -170,8 +207,7 @@ def _import_row(row: dict) -> dict:
 def cmd_import(file: str) -> None:
     src = Path(file).expanduser()
     if not src.exists():
-        console.print(f"[red]Cannot open file: {file}[/red]")
-        return
+        raise ComoError(f"Cannot open file: {file}")
 
     current = create_database() if not COMO_BATTERY_FILE.exists() else read_database()
 
@@ -185,8 +221,7 @@ def cmd_import(file: str) -> None:
 
 def cmd_export() -> None:
     if not COMO_BATTERY_FILE.exists():
-        console.print("[red]No como database.[/red]")
-        return
+        raise ComoError("No como database.")
 
     dest = Path("como.csv")
     if dest.exists():
@@ -250,8 +285,6 @@ def _automate_macos() -> None:
         if not como_path:
             console.print("[red]como not found in PATH — install it first.[/red]")
             return
-        # ~/Library/LaunchAgents does not exist on a fresh account.
-        plist_path.parent.mkdir(parents=True, exist_ok=True)
         plist_path.write_text(_PLIST_SAVE.format(como_path=como_path))
         subprocess.run(["launchctl", "load", str(plist_path)], check=False)
         console.print("  como will run automatically (8am, 2pm, 8pm)")
