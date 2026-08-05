@@ -1,97 +1,60 @@
-# como: batteries complete
+# como — track battery health from the command line
 
-[`como`](https://github.com/cwoebker/como) is a minimalistic utillity to monitor your battery.
-
-[![PyPI Version](https://img.shields.io/pypi/v/penpal.svg)](https://pypi.python.org/pypi/como)
-[![Build Status](https://secure.travis-ci.org/cwoebker/como.png?branch=master)](http://travis-ci.org/cwoebker/como)
-[![PyPI License](https://img.shields.io/pypi/l/como.svg)](https://pypi.python.org/pypi/como)
+[![PyPI Version](https://img.shields.io/pypi/v/como.svg)](https://pypi.python.org/pypi/como)
 [![PyPI Python Versions](https://img.shields.io/pypi/pyversions/como.svg)](https://pypi.python.org/pypi/como)
-[![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/cwoebker)
+[![PyPI License](https://img.shields.io/pypi/l/como.svg)](https://pypi.python.org/pypi/como)
 
----
+`como` is a minimal CLI for recording and inspecting your laptop battery's health over time. It runs on macOS and Linux, stores everything locally in SQLite, and can schedule itself via `launchd` or `cron`.
 
-## Naming ##
+## Naming
 
-**Why como?**
+Alessandro Volta — who invented the battery — grew up in [Como](https://maps.google.com/maps/place?ftid=0x47869c481027ed63:0xb99b96af785ff524&q=Como+italy&gl=us&ie=UTF8&ll=45.905539,8.869743&spn=0.000239,0.000343&t=h&z=12&vpsrc=0), Italy. The name stuck.
 
-The answer is simple: Alessandro Volta grew up in the town of [Como](https://maps.google.com/maps/place?ftid=0x47869c481027ed63:0xb99b96af785ff524&q=Como+italy&gl=us&ie=UTF8&ll=45.905539,8.869743&spn=0.000239,0.000343&t=h&z=12&vpsrc=0)
-and since he invented the battery I thought it would be a great name.
+![Map of Como, Italy](https://mts0.google.com/vt/data=9JDtAHjlTn3x-Sj-pwj3TI8qbtmqB_-LnEoOWHi1JIH9W7fJrfYPYf2ali6aD042Ny8SYFLwPPZZKXlfEZ4QdxIpwulW3ms6uP5wUAoVf93Jyw3RqOzuf7phyiJTNTa7F40NnNzgarXK_1t3AxD-WqBu5Go8Gincuj1Ho04og_3Sa2UiBghMZdgO5C25rkiQkreOKiiL1sBaWOqNe2jnAM4MI2IC)
 
-![Map not found](https://mts0.google.com/vt/data=9JDtAHjlTn3x-Sj-pwj3TI8qbtmqB_-LnEoOWHi1JIH9W7fJrfYPYf2ali6aD042Ny8SYFLwPPZZKXlfEZ4QdxIpwulW3ms6uP5wUAoVf93Jyw3RqOzuf7phyiJTNTa7F40NnNzgarXK_1t3AxD-WqBu5Go8Gincuj1Ho04og_3Sa2UiBghMZdgO5C25rkiQkreOKiiL1sBaWOqNe2jnAM4MI2IC)
+## Install
 
-## What is this? ##
-
-With como you can check out how your battery is doing.
-You can easily `automate` this process so that you don't need to worry about it. 
-Every once in a while you can quickly check out your battery `info`.
-You can `export` this data into the portable `.csv` format and `import` it again later.
-You can even import data form another battery utility such as [coconutBattery](http://www.coconut-flavour.com).
-
-## [como.cwoebker.com](https://como.cwoebker.com) ##
-
-Most importantly you can take all this to the next level, if you choose to do so.
-`Upload` your battery data to the como web application to check everything out in a nice interface wherever you are. 
-You can always easily `open` your computer's personal page.
-
-## Installation
-
-It's as simple as that:
-
-`$ pip install como`
-
-Afterwards run the `init` command to get everything setup and stop worrying.
-
-`$ como init`
+```bash
+uv tool install como     # recommended
+pipx install como        # alternative
+pip install como         # also fine
+```
 
 ## Usage
 
-`como` - Saves the current battery state.
+| Command | Description |
+| --- | --- |
+| `como` / `como save` | Record the current battery snapshot |
+| `como info` | Show current battery details (capacity, cycles, voltage, power, health) |
+| `como data [--since 30d]` | Show database stats and capacity/cycle history graphs. `--since` accepts `d`/`w`/`m`/`y` (e.g. `30d`, `4w`, `6m`, `1y`) |
+| `como export` | Write `como.csv` to the current directory |
+| `como import <file.csv>` | Import battery records from a CSV file |
+| `como automate` | Toggle scheduled saves (`launchd` on macOS, `cron` on Linux) at 8:00, 14:00, 20:00 |
+| `como reset` | Delete the local database |
 
-`como info` - Prints information about battery and battery history.
+## Storage
 
-`como import <file>` - Imports statistics from .csv file (time, capacity, cycles)
+Battery records live in a single SQLite database at:
 
-`como export` - Exports data to `como.csv` file to current directory.
+- macOS / Linux: `$XDG_DATA_HOME/como/como.db` (defaults to `~/.local/share/como/como.db`)
+- Windows: `%APPDATA%\como\como.db`
 
-`como upload` - Uploads data to server.
+The schema captures `time`, `capacity`, `cycles`, `voltage_mv`, `power_mw`, and `is_charging` for every save. Old zlib-compressed JSON databases from previous versions are migrated transparently on first run (a `.bak` of the original is kept alongside).
 
-`como open` - Opens personal battery information page.
+## Development
 
-`como automate` - Turns scheduling on or off. Saving and Uploading.
+Requires [mise](https://mise.jdx.dev) and [uv](https://docs.astral.sh/uv/).
 
-`como init` - Quick command to get everything setup on first start.
+```bash
+mise install              # installs Python + uv per mise.toml
+uv sync                   # creates .venv with all deps
+uv run como info          # run the working-tree CLI (no install needed)
+uv run pytest             # run tests with coverage
+uv run pre-commit install # enable ruff + ty pre-commit hooks
+```
 
-`como reset` - Removes all entries in database.
+## License
 
+MIT — see [LICENSE](LICENSE).
 
-## Advanced
-
-`como` stores all battery information (with zlib compression) in the file `~/.como`.
-You are free to do whatever you want with this data, it is yours after all.
-
-So go out there and hack some code!
-
-## Features ##
-
-- Cross-Platform (Linux & Mac)
-- Automatically run with `cron`/`launchd` scheduling
-- Export data to `.csv` file
-- Import data from `.csv` file
-- Simple Statistics
-- Histories for Cycles and Capacity
-- Upload Data to server
-
-## Contribute
-
-[Fork and contribute!](https://github.com/cwoebker/como)
-
----
-
-For questions and suggestions, feel free to shoot me an email at <me@cwoebker.com>.
-
-Also, follow or tweet [@cwoebker](https://twitter.com/cwoebker).
-
----
-
-Copyright (c) 2012-2020, Cecil Wöbker.
-License: BSD (see LICENSE for details)
+Copyright (c) 2012-2026, Cecil Wöbker. Contact: <me@cwoebker.com>.
