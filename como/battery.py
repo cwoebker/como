@@ -1,188 +1,161 @@
-# -*- coding: utf-8 -*-
 """
-como.battery - the power connection
+como.battery - OS-specific battery data collection
 """
 
-# http://www.macrumors.com/2010/04/16/apple-tweaks-serial-number-format-with-new-macbook-pro/
+from __future__ import annotations
 
+import json
+import subprocess
 import sys
-import platform
-from datetime import date, datetime
-
-from clint.textui import puts
-
-from paxo.util import is_osx, is_lin, is_win
-from como.settings import LOCATION_CODES
-
-# OS dependent imports
-
-if is_osx or is_lin:
-    import subprocess
-
-if is_win:
-    try:
-        import win32api
-    except ImportError:
-        print("The windows python api isn't installed. Please install pywin32.")
-        sys.exit(1)
-    try:
-        import wmi
-    except ImportError:
-        print("Make sure wmi is installed.")
-        sys.exit(1)
+from pathlib import Path
+from typing import TypedDict
 
 
-def get_age():
-    """Get age of computer. Only OSX for now"""
-    if is_osx:
-        serial = {}
-        cmd = "ioreg -l | awk '/IOPlatformSerialNumber/ " + \
-              "{ split($0, line, \"\\\"\"); printf(\"%s\\n\", line[4]); }'"
-        serial['number'] = subprocess.check_output(
-            cmd, shell=True).translate(None, b'\n')
-        temp = serial['number']
-        if len(temp) == 11:
-            for code in LOCATION_CODES:
-                temp = temp.lstrip(code)
-            serial['year'] = int(temp[0])
-            serial['week'] = int(temp[1:3])
-        else:
-            serial['year'] = 0
-            serial['week'] = 0
-            return "N/A"
+class BatteryInfo(TypedDict):
+    serial: str
+    maxcap: int
+    curcap: int
+    designcap: int | None
+    cycles: int | None
+    voltage_mv: int | None  # millivolts
+    current_ma: int | None  # milliamps, signed (negative = discharging)
 
-        creation = str(date.today().year)[:-1] + str(
-            serial['year']) + str(serial['week']) + "1"
 
-        timedelta = datetime.utcnow() - datetime.strptime(creation, '%Y%W%w')
-        return timedelta.days / 30
+def get_battery() -> BatteryInfo:
+    if sys.platform == "darwin":
+        return _get_battery_macos()
+    elif sys.platform == "linux":
+        return _get_battery_linux()
+    elif sys.platform == "win32":
+        return _get_battery_windows()
     else:
-        puts("no age on this operating system")
-        sys.exit(0)
+        raise RuntimeError(f"Unsupported platform: {sys.platform}")
 
 
-def grep_filter(list, term):
-    for line in list:
-        if term in line:
-            yield line
+def _get_battery_macos() -> BatteryInfo:
+    import plistlib
+
+    raw = subprocess.check_output(
+        ["ioreg", "-r", "-c", "AppleSmartBattery", "-a"],
+        stderr=subprocess.DEVNULL,
+    )
+    entries = plistlib.loads(raw)
+    if not entries:
+        raise RuntimeError("No battery found via ioreg")
+
+    b = entries[0]
+
+    amperage: int = b.get("Amperage", 0)
+    # ioreg returns unsigned 64-bit; negative current is stored as a large number
+    if amperage > 2**63:
+        amperage -= 2**64
+
+    return {
+        "serial": b.get("BatterySerialNumber", ""),
+        "maxcap": b["MaxCapacity"],
+        "curcap": b["CurrentCapacity"],
+        "designcap": b.get("DesignCapacity"),
+        "cycles": b.get("CycleCount"),
+        "voltage_mv": b.get("Voltage"),
+        "current_ma": amperage,
+    }
 
 
-def get_battery():
-    """Gets all information associated with the battery from respective
-    system sources"""
-    battery = {}
-    if is_osx:
-        raw_osx_version, _, _ = platform.mac_ver()
-        osx_version = str('.'.join(raw_osx_version.split('.')[:2]))
-        # TODO: evaluate other sources like: system_profiler SPPowerDataType | grep "Cycle Count" | awk '{print $3}'
-        tmp = subprocess.check_output('ioreg -w0 -l | grep Capacity', shell=True)
-        bat = tmp.translate(None, b' "|').split(b'\n')
-        battery['serial'] = subprocess.check_output(
-            'ioreg -w0 -l | grep BatterySerialNumber',
-            shell=True
-        ).translate(None, b'\n "|').lstrip(b'BatterySerialNumber=')
-        # battery['temp'] = int(subprocess.check_output(
-        #     'ioreg -w0 -l | grep Temperature',
-        #     shell=True).translate(None, '\n "|').lstrip('Temperature='))
-        if osx_version == "10.15":
-            battery['maxcap'] = int(bat[3].lstrip(b'MaxCapacity='))
-            battery['curcap'] = int(bat[4].lstrip(b'CurrentCapacity='))
-            battery['legacy'] = bat[5].lstrip(b'LegacyBatteryInfo=')
-            battery['designcap'] = int(bat[7].lstrip(b'DesignCapacity='))
-        elif osx_version == "10.14":
-            battery['maxcap'] = int(bat[3].lstrip(b'MaxCapacity='))
-            battery['curcap'] = int(bat[4].lstrip(b'CurrentCapacity='))
-            battery['legacy'] = bat[5].lstrip(b'LegacyBatteryInfo=')
-            battery['designcap'] = int(bat[6].lstrip(b'DesignCapacity='))
-        else:
-            battery['maxcap'] = int(bat[1].lstrip(b'MaxCapacity='))
-            battery['curcap'] = int(bat[2].lstrip(b'CurrentCapacity='))
-            battery['legacy'] = bat[3].lstrip(b'LegacyBatteryInfo=')
-            battery['designcap'] = int(bat[4].lstrip(b'DesignCapacity='))
-        battery['cycles'] = int(
-            battery['legacy'].translate(
-                None, b'{}=').split(b',')[5].lstrip(b'CycleCount'))
-        battery['amperage'] = int(
-            battery['legacy'].translate(
-                None, b'{}=').split(b',')[0].lstrip(b'Amperage'))
-        if battery['amperage'] > 999999:
-            battery['amperage'] -= 18446744073709551615
-        battery['voltage'] = int(
-            battery['legacy'].translate(
-                None, b'{}=').split(b',')[4].lstrip(b'Voltage'))
-    elif is_lin:
-        battery['serial'] = subprocess.check_output(
-            "grep \"^serial number\" " +
-            "/proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
-            shell=True
-        ).translate(None, b'\n')
-        battery['state'] = subprocess.check_output(
-            "grep \"^charging state\" " +
-            "/proc/acpi/battery/BAT0/state | awk '{ print $3 }'",
-            shell=True
-        )
-        battery['maxcap'] = float(subprocess.check_output(
-            "grep \"^last full capacity\" " +
-            "/proc/acpi/battery/BAT0/info | awk '{ print $4 }'",
-            shell=True
-        ))
-        battery['curcap'] = float(subprocess.check_output(
-            "grep \"^remaining capacity\" " +
-            "/proc/acpi/battery/BAT0/state | awk '{ print $3 }'",
-            shell=True
-        ))
-        battery['designcap'] = float(subprocess.check_output(
-            "grep \"^design capacity:\" " +
-            "/proc/acpi/battery/BAT0/info | awk '{ print $3 }'",
-            shell=True
-        ))
-        battery['cycles'] = int(subprocess.check_output(
-            "grep \"^cycle count\" /proc/acpi/battery/BAT0/info",
-            shell=True
-        ).lstrip("cycle count:").translate(None, ' '))
-    elif is_win:
-        # Get power status of the system using ctypes to call GetSystemPowerStatus
-        """import ctypes
-        from ctypes import wintypes
+def _get_battery_linux() -> BatteryInfo:
+    import glob
 
-        class SYSTEM_POWER_STATUS(ctypes.Structure):
-            _fields_ = [
-                ('ACLineStatus', wintypes.BYTE),
-                ('BatteryFlag', wintypes.BYTE),
-                ('BatteryLifePercent', wintypes.BYTE),
-                ('Reserved1', wintypes.BYTE),
-                ('BatteryLifeTime', wintypes.DWORD),
-                ('BatteryFullLifeTime', wintypes.DWORD),
-            ]
+    battery_dirs = sorted(glob.glob("/sys/class/power_supply/BAT*"))
+    if not battery_dirs:
+        raise RuntimeError("No battery found at /sys/class/power_supply/")
 
-        SYSTEM_POWER_STATUS_P = ctypes.POINTER(SYSTEM_POWER_STATUS)
+    bat = Path(battery_dirs[0])
 
-        GetSystemPowerStatus = ctypes.windll.kernel32.GetSystemPowerStatus
-        GetSystemPowerStatus.argtypes = [SYSTEM_POWER_STATUS_P]
-        GetSystemPowerStatus.restype = wintypes.BOOL
+    def read_int(name: str) -> int | None:
+        p = bat / name
+        try:
+            return int(p.read_text().strip())
+        except (FileNotFoundError, ValueError):
+            return None
 
-        status = SYSTEM_POWER_STATUS()
-        if not GetSystemPowerStatus(ctypes.pointer(status)):
-            raise ctypes.WinError()
-        print 'ACLineStatus', status.ACLineStatus
-        print 'BatteryFlag', status.BatteryFlag
-        print 'BatteryLifePercent', status.BatteryLifePercent
-        print 'BatteryLifeTime', status.BatteryLifeTime
-        print 'BatteryFullLifeTime', status.BatteryFullLifeTime"""
-        #c = wmi.WMI()
-        t = wmi.WMI(moniker="//./root/wmi")
-        #b = c.Win32_Battery()[0]
-        battery['maxcap'] = t.ExecQuery("Select * from BatteryFullChargedCapacity")[0].FullChargedCapacity
-        batt = t.ExecQuery("Select * from BatteryStatus where Voltage > 0")[0]
-        battery['curcap'] = batt.RemainingCapacity
-        battery['voltage'] = batt.Voltage
-        battery['amperage'] = batt.ChargeRate
-        if batt.Charging:
-            battery['amperage'] = batt.ChargeRate
-        elif batt.Discharging:
-            battery['amperage'] = batt.DischargeRate
-        else:
-            battery['amperage'] = 0
-        battery['serial'] = batt.Name
+    def read_str(name: str) -> str:
+        p = bat / name
+        try:
+            return p.read_text().strip()
+        except FileNotFoundError:
+            return ""
 
-    return battery
+    # Drivers expose either charge_* (µAh) or energy_* (µWh) depending on hardware
+    maxcap = read_int("charge_full") or read_int("energy_full")
+    curcap = read_int("charge_now") or read_int("energy_now")
+    designcap = read_int("charge_full_design") or read_int("energy_full_design")
+
+    if maxcap is None or curcap is None:
+        raise RuntimeError(f"Could not read battery capacity from {bat}")
+
+    # Convert µV → mV and µA → mA; negate current when discharging
+    voltage_uv = read_int("voltage_now")
+    current_ua = read_int("current_now")
+    status = read_str("status").lower()
+
+    voltage_mv = voltage_uv // 1000 if voltage_uv is not None else None
+    current_ma: int | None = None
+    if current_ua is not None:
+        current_ma = current_ua // 1000
+        if status == "discharging":
+            current_ma = -current_ma
+
+    return {
+        "serial": read_str("serial_number"),
+        "maxcap": maxcap,
+        "curcap": curcap,
+        "designcap": designcap,
+        "cycles": read_int("cycle_count"),
+        "voltage_mv": voltage_mv,
+        "current_ma": current_ma,
+    }
+
+
+def _get_battery_windows() -> BatteryInfo:
+    # Query battery info via PowerShell CIM; no third-party packages needed.
+    # Cycle count is not exposed by standard Windows APIs and will be None.
+    script = (
+        "$r = @{};"
+        "try { $cn = 'BatteryFullChargedCapacity';"
+        " $r.maxcap = (Get-CimInstance -Ns ROOT\\WMI -Class $cn)[0].FullChargedCapacity"
+        " } catch {};"
+        "try {"
+        "  $s = (Get-CimInstance -Ns ROOT\\WMI -Class BatteryStatus)[0];"
+        "  $r.curcap = $s.RemainingCapacity;"
+        "  $r.voltage = $s.Voltage;"
+        "  if ($s.Charging) { $r.current = [int]$s.ChargeRate }"
+        "  elseif ($s.Discharging) { $r.current = -[int]$s.DischargeRate }"
+        "  else { $r.current = 0 }"
+        "} catch {};"
+        "try {"
+        "  $d = (Get-CimInstance -Ns ROOT\\WMI -Class BatteryStaticData)[0];"
+        "  $r.designcap = $d.DesignedCapacity;"
+        "  $r.serial = $d.UniqueID"
+        "} catch {};"
+        "$r | ConvertTo-Json -Compress"
+    )
+
+    proc = subprocess.run(
+        ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    data: dict = json.loads(proc.stdout)
+
+    # Windows ChargeRate/DischargeRate are in mW, not mA — we store as-is in
+    # current_ma with a note that on Windows the unit is actually mW.
+    return {
+        "serial": str(data.get("serial", "")),
+        "maxcap": int(data.get("maxcap", 0)),
+        "curcap": int(data.get("curcap", 0)),
+        "designcap": int(data["designcap"]) if "designcap" in data else None,
+        "cycles": None,
+        "voltage_mv": int(data["voltage"]) if "voltage" in data else None,
+        "current_ma": int(data["current"]) if "current" in data else None,
+    }
