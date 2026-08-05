@@ -1,5 +1,30 @@
 # History #
 
+## 0.8.0 ##
+
+*June 2nd 2026*
+
+- Modernize packaging: `pyproject.toml` + `uv` (Python >=3.10), drop `setup.py`/`Pipfile`
+- Rewrite CLI on `click` + `rich`; remove `paxo`/`clint`
+- Rewrite battery collection per platform:
+    - macOS: `ioreg` + `plistlib` (works on Apple Silicon)
+    - Linux: `/sys/class/power_supply/` (replaces removed `/proc/acpi/battery/`)
+    - Windows: PowerShell CIM queries, no extra deps
+- Add multi-battery support and capture voltage, power, and charging state
+- `como data --since 30d|4w|6m|1y` to filter history
+- Switch storage to SQLite at `$XDG_DATA_HOME/como/como.db` (transparent migration from the old zlib-JSON `~/.como`, with `.bak`)
+- Remove `upload`/`open`/`init` (`como.cwoebker.com` is gone)
+- Proper non-zero exit codes via `ComoError` -> `click.ClickException`
+- License switched from BSD to MIT
+- Tooling: ruff (lint + format), ty (type check), pytest with coverage, pre-commit, Dependabot, `mise.toml`
+
+## 0.7.0 ##
+
+*September 27th 2020*
+
+- Migrate to Python 3
+- Update to `paxo` 0.3.0
+
 ## 0.6.2 ##
 
 *October 9th 2018*
