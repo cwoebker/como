@@ -9,7 +9,6 @@ requires-python = ">=3.10"
 dependencies = [
     "click>=8.0",
     "rich>=13.0",
-    "tablib>=3.0",
     "python-crontab>=3.0; sys_platform == 'linux'",
 ]
 
