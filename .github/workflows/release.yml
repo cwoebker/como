@@ -30,6 +30,21 @@ jobs:
             echo "::error::Tag v$tag_version does not match pyproject.toml version $pkg_version"
             exit 1
           fi
+      # PyPI keys distributions on (project, version, type), not content, so a
+      # published version can never be overwritten -- only superseded by a new
+      # one. Fail here with a clear message rather than at the upload step.
+      - name: Verify version is not already on PyPI
+        run: |
+          version="$(uv version --short)"
+          # `|| true` keeps a network blip from failing the step: steps run under
+          # `bash -e`, so the assignment would otherwise inherit curl's exit code.
+          # Only a definitive 200 blocks; the upload step stays the real judge.
+          code="$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' \
+            "https://pypi.org/pypi/como/$version/json" || true)"
+          if [ "$code" = "200" ]; then
+            echo "::error::como $version is already on PyPI -- bump the version and re-tag"
+            exit 1
+          fi
       - run: uv build
       - uses: actions/upload-artifact@v7
         with:
