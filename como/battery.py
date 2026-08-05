@@ -18,21 +18,55 @@ class BatteryInfo(TypedDict):
     designcap: int | None
     cycles: int | None
     voltage_mv: int | None  # millivolts
-    current_ma: int | None  # milliamps, signed (negative = discharging)
+    current_ma: int | None  # milliamps, signed (negative = discharging); None on Win
+    power_mw: int | None  # milliwatts, normalized across all platforms
+    is_charging: bool | None
 
 
-def get_battery() -> BatteryInfo:
+def get_batteries() -> list[BatteryInfo]:
+    """Return info for each physical battery (one entry per battery pack)."""
     if sys.platform == "darwin":
-        return _get_battery_macos()
+        return _get_batteries_macos()
     elif sys.platform == "linux":
-        return _get_battery_linux()
+        return _get_batteries_linux()
     elif sys.platform == "win32":
-        return _get_battery_windows()
+        return [_get_battery_windows()]
     else:
         raise RuntimeError(f"Unsupported platform: {sys.platform}")
 
 
-def _get_battery_macos() -> BatteryInfo:
+def get_battery() -> BatteryInfo:
+    """Return aggregated battery info across all battery packs (used for saving)."""
+    batteries = get_batteries()
+    return batteries[0] if len(batteries) == 1 else _aggregate(batteries)
+
+
+def _aggregate(batteries: list[BatteryInfo]) -> BatteryInfo:
+    def sum_opt(vals: list[int | None]) -> int | None:
+        present = [v for v in vals if v is not None]
+        return sum(present) if present else None
+
+    return {
+        "serial": batteries[0]["serial"],
+        "maxcap": sum(b["maxcap"] for b in batteries),
+        "curcap": sum(b["curcap"] for b in batteries),
+        "designcap": sum_opt([b["designcap"] for b in batteries]),
+        "cycles": max(
+            (b["cycles"] for b in batteries if b["cycles"] is not None), default=None
+        ),
+        "voltage_mv": batteries[0]["voltage_mv"],
+        "current_ma": sum_opt([b["current_ma"] for b in batteries]),
+        "power_mw": sum_opt([b["power_mw"] for b in batteries]),
+        "is_charging": batteries[0]["is_charging"],
+    }
+
+
+# ---------------------------------------------------------------------------
+# macOS
+# ---------------------------------------------------------------------------
+
+
+def _get_batteries_macos() -> list[BatteryInfo]:
     import plistlib
 
     raw = subprocess.check_output(
@@ -42,34 +76,53 @@ def _get_battery_macos() -> BatteryInfo:
     entries = plistlib.loads(raw)
     if not entries:
         raise RuntimeError("No battery found via ioreg")
+    return [_parse_macos_battery(b) for b in entries]
 
-    b = entries[0]
 
+def _parse_macos_battery(b: dict) -> BatteryInfo:
     amperage: int = b.get("Amperage", 0)
-    # ioreg returns unsigned 64-bit; negative current is stored as a large number
+    # ioreg stores negative current as unsigned 64-bit (two's complement)
     if amperage > 2**63:
         amperage -= 2**64
 
+    voltage_mv: int | None = b.get("Voltage")
+    is_charging = amperage > 0
+    power_mw = abs(voltage_mv * amperage) // 1000 if voltage_mv is not None else None
+
+    # On Apple Silicon, MaxCapacity/CurrentCapacity are percentages (0-100);
+    # raw mAh lives in AppleRawMaxCapacity/AppleRawCurrentCapacity. On Intel,
+    # only the legacy keys exist and already hold raw mAh.
+    maxcap = b.get("AppleRawMaxCapacity", b["MaxCapacity"])
+    curcap = b.get("AppleRawCurrentCapacity", b["CurrentCapacity"])
+
     return {
         "serial": b.get("BatterySerialNumber", ""),
-        "maxcap": b["MaxCapacity"],
-        "curcap": b["CurrentCapacity"],
+        "maxcap": maxcap,
+        "curcap": curcap,
         "designcap": b.get("DesignCapacity"),
         "cycles": b.get("CycleCount"),
-        "voltage_mv": b.get("Voltage"),
+        "voltage_mv": voltage_mv,
         "current_ma": amperage,
+        "power_mw": power_mw,
+        "is_charging": is_charging,
     }
 
 
-def _get_battery_linux() -> BatteryInfo:
+# ---------------------------------------------------------------------------
+# Linux
+# ---------------------------------------------------------------------------
+
+
+def _get_batteries_linux() -> list[BatteryInfo]:
     import glob
 
     battery_dirs = sorted(glob.glob("/sys/class/power_supply/BAT*"))
     if not battery_dirs:
         raise RuntimeError("No battery found at /sys/class/power_supply/")
+    return [_read_linux_battery(Path(d)) for d in battery_dirs]
 
-    bat = Path(battery_dirs[0])
 
+def _read_linux_battery(bat: Path) -> BatteryInfo:
     def read_int(name: str) -> int | None:
         p = bat / name
         try:
@@ -92,10 +145,11 @@ def _get_battery_linux() -> BatteryInfo:
     if maxcap is None or curcap is None:
         raise RuntimeError(f"Could not read battery capacity from {bat}")
 
-    # Convert µV → mV and µA → mA; negate current when discharging
+    status = read_str("status").lower()
+    is_charging = status == "charging"
+
     voltage_uv = read_int("voltage_now")
     current_ua = read_int("current_now")
-    status = read_str("status").lower()
 
     voltage_mv = voltage_uv // 1000 if voltage_uv is not None else None
     current_ma: int | None = None
@@ -103,6 +157,10 @@ def _get_battery_linux() -> BatteryInfo:
         current_ma = current_ua // 1000
         if status == "discharging":
             current_ma = -current_ma
+
+    power_mw: int | None = None
+    if voltage_mv is not None and current_ma is not None:
+        power_mw = abs(voltage_mv * current_ma) // 1000
 
     return {
         "serial": read_str("serial_number"),
@@ -112,12 +170,20 @@ def _get_battery_linux() -> BatteryInfo:
         "cycles": read_int("cycle_count"),
         "voltage_mv": voltage_mv,
         "current_ma": current_ma,
+        "power_mw": power_mw,
+        "is_charging": is_charging,
     }
+
+
+# ---------------------------------------------------------------------------
+# Windows
+# ---------------------------------------------------------------------------
 
 
 def _get_battery_windows() -> BatteryInfo:
     # Query battery info via PowerShell CIM; no third-party packages needed.
     # Cycle count is not exposed by standard Windows APIs and will be None.
+    # ChargeRate/DischargeRate are in mW, so current_ma is left as None.
     script = (
         "$r = @{};"
         "try { $cn = 'BatteryFullChargedCapacity';"
@@ -127,9 +193,10 @@ def _get_battery_windows() -> BatteryInfo:
         "  $s = (Get-CimInstance -Ns ROOT\\WMI -Class BatteryStatus)[0];"
         "  $r.curcap = $s.RemainingCapacity;"
         "  $r.voltage = $s.Voltage;"
-        "  if ($s.Charging) { $r.current = [int]$s.ChargeRate }"
-        "  elseif ($s.Discharging) { $r.current = -[int]$s.DischargeRate }"
-        "  else { $r.current = 0 }"
+        "  if ($s.Charging) { $r.power = $s.ChargeRate; $r.charging = $true }"
+        "  elseif ($s.Discharging)"
+        " { $r.power = $s.DischargeRate; $r.charging = $false }"
+        "  else { $r.power = 0; $r.charging = $false }"
         "} catch {};"
         "try {"
         "  $d = (Get-CimInstance -Ns ROOT\\WMI -Class BatteryStaticData)[0];"
@@ -146,10 +213,16 @@ def _get_battery_windows() -> BatteryInfo:
         check=True,
     )
 
-    data: dict = json.loads(proc.stdout)
+    stdout = proc.stdout.strip()
+    data: dict = json.loads(stdout) if stdout else {}
+    # Every CIM query is wrapped in try/catch, so a machine with no battery
+    # yields an empty object rather than an error.
+    if not data:
+        raise RuntimeError("No battery found via WMI")
 
-    # Windows ChargeRate/DischargeRate are in mW, not mA — we store as-is in
-    # current_ma with a note that on Windows the unit is actually mW.
+    is_charging: bool | None = bool(data["charging"]) if "charging" in data else None
+    power_mw: int | None = abs(int(data["power"])) if "power" in data else None
+
     return {
         "serial": str(data.get("serial", "")),
         "maxcap": int(data.get("maxcap", 0)),
@@ -157,5 +230,7 @@ def _get_battery_windows() -> BatteryInfo:
         "designcap": int(data["designcap"]) if "designcap" in data else None,
         "cycles": None,
         "voltage_mv": int(data["voltage"]) if "voltage" in data else None,
-        "current_ma": int(data["current"]) if "current" in data else None,
+        "current_ma": None,
+        "power_mw": power_mw,
+        "is_charging": is_charging,
     }
