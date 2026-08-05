@@ -6,6 +6,12 @@ on:
       - "v*.*.*"
   workflow_dispatch:
 
+# Serialize releases globally: publishing is not idempotent, and a cancelled
+# run can leave PyPI updated with no matching GitHub release.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
