@@ -1,24 +1,10 @@
-# -*- coding: utf-8 -*-
-"""
-como.settings - some global variables
-"""
-
 import os
+import sys
+from pathlib import Path
 
-from paxo.util import DEBUG_MODE, XDG_DATA_HOME
-
-LOCATION_CODES = [
-    '1C', '2Z', '4H', '5K', '8H', '5D', '7J', 'CK', 'E', 'EE',
-    'F', 'FC', 'G8', 'GQ', 'PT', 'CY', 'QT', 'QP', 'RN', 'RM',
-    'SG', 'UV', 'U2', 'V7', 'VM', 'W8', 'WQ', 'XA', 'XB', 'YM'
-]
-
-DEV_URL = 'http://127.0.0.1:5000'
-REAL_URL = 'https://como.cwoebker.com'
-
-COMO_BATTERY_FILE = os.path.join(XDG_DATA_HOME, 'como/como')
-
-if DEBUG_MODE:
-    SERVER_URL = DEV_URL
+if sys.platform == "win32":
+    _data_home = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
 else:
-    SERVER_URL = REAL_URL
+    _data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+
+COMO_BATTERY_FILE = _data_home / "como" / "como"
