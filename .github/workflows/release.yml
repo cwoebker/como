@@ -43,7 +43,7 @@ jobs:
     needs: [build, test]
     runs-on: ubuntu-latest
     environment:
-      name: pypi
+      name: release
       url: https://pypi.org/project/como/
     permissions:
       id-token: write
