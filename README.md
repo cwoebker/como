@@ -62,7 +62,7 @@ Releases are automated via GitHub Actions:
 
 Pushing a `v*.*.*` tag directly also triggers the release workflow, so a manual `git tag vX.Y.Z && git push origin vX.Y.Z` works too.
 
-Publishing to PyPI uses [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC) — no API token is stored in the repo. This requires a one-time setup on PyPI: on the [`como` project's](https://pypi.org/manage/project/como/publishing/) publishing settings, add a trusted publisher for this repository, workflow `release.yml`, and environment `pypi`.
+Publishing to PyPI uses [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC) — no API token is stored in the repo. This requires a one-time setup on PyPI: on the [`como` project's](https://pypi.org/manage/project/como/publishing/) publishing settings, add a trusted publisher for this repository, workflow `release.yml`, and environment `release`.
 
 ## License
 
