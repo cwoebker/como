@@ -1,3 +1,6 @@
 [tools]
 python = "3.12"
-uv = "latest"
+uv = "0.12.3"
+
+[env]
+UV_PROJECT_ENVIRONMENT = ".venv"

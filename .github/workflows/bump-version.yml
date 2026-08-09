@@ -1,5 +1,8 @@
 name: Bump version
 
+# Write the HISTORY.md entry first -- this refuses to tag without one, so the
+# failure happens here rather than after the package is already on PyPI.
+
 on:
   workflow_dispatch:
     inputs:
@@ -10,30 +13,52 @@ on:
         options: [patch, minor, major]
         default: patch
 
-# Two bumps at once would race on pushing the version commit and tag.
-concurrency:
-  group: bump-version
-  cancel-in-progress: false
-
 permissions:
-  contents: write
-  actions: write
+  contents: read
+
+concurrency:
+  # Shared with release.yml so a bump cannot race an in-flight release.
+  group: release
+  cancel-in-progress: false
 
 jobs:
   bump:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
 
       - name: Bump version
         id: bump
         run: |
           uv version --bump ${{ inputs.bump }} --no-sync
           echo "version=$(uv version --short)" >> "$GITHUB_OUTPUT"
+
+      - name: Require a changelog entry
+        run: |
+          version="${{ steps.bump.outputs.version }}"
+          if ! grep -qxF "## $version ##" HISTORY.md; then
+            echo "::error::HISTORY.md has no '## $version ##' section. Add it, then re-run this workflow."
+            exit 1
+          fi
+
+      - name: Guard against re-releasing a published version
+        run: |
+          version="${{ steps.bump.outputs.version }}"
+          code="$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' \
+            "https://pypi.org/pypi/como/$version/json" || true)"
+          if [ "$code" = "200" ]; then
+            echo "::error::como $version is already on PyPI and can never be replaced. Bump a different part."
+            exit 1
+          fi
 
       - name: Commit and tag
         env:
@@ -42,11 +67,13 @@ jobs:
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: |
+          version="${{ steps.bump.outputs.version }}"
           git add pyproject.toml uv.lock
-          git commit -m "chore: bump version to ${{ steps.bump.outputs.version }}"
-          git tag "v${{ steps.bump.outputs.version }}"
-          git push origin "HEAD:${{ github.ref_name }}"
-          git push origin "v${{ steps.bump.outputs.version }}"
+          git commit -m "Bump version to $version"
+          git tag -a "v$version" -m "v$version"
+          # One push: two would leave a version commit with no tag if the
+          # second failed.
+          git push origin HEAD --follow-tags
 
       - name: Trigger release workflow
         env:

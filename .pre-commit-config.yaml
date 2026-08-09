@@ -1,13 +1,14 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.15
+    rev: v0.16.2
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [--fix]
       - id: ruff-format
 
   - repo: local
     hooks:
+      # No upstream repo for ty; `uv run` keeps the hook on the pinned version.
       - id: ty
         name: ty
         entry: uv run ty check

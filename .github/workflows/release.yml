@@ -2,12 +2,11 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*.*.*"
+    tags: ["v*.*.*"]
+  # bump-version.yml dispatches this: GitHub suppresses workflow runs for
+  # pushes authored by GITHUB_TOKEN, so its tag cannot trigger us on its own.
   workflow_dispatch:
 
-# Serialize releases globally: publishing is not idempotent, and a cancelled
-# run can leave PyPI updated with no matching GitHub release.
 concurrency:
   group: release
   cancel-in-progress: false
@@ -15,14 +14,21 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  PACKAGE_NAME: como
+
 jobs:
   build:
     name: Build distribution
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+
       - name: Verify tag matches package version
+        id: version
         run: |
           tag_version="${GITHUB_REF_NAME#v}"
           pkg_version="$(uv version --short)"
@@ -30,34 +36,66 @@ jobs:
             echo "::error::Tag v$tag_version does not match pyproject.toml version $pkg_version"
             exit 1
           fi
-      # PyPI keys distributions on (project, version, type), not content, so a
-      # published version can never be overwritten -- only superseded by a new
-      # one. Fail here with a clear message rather than at the upload step.
+          echo "version=$pkg_version" >> "$GITHUB_OUTPUT"
+
       - name: Verify version is not already on PyPI
         run: |
-          version="$(uv version --short)"
-          # `|| true` keeps a network blip from failing the step: steps run under
-          # `bash -e`, so the assignment would otherwise inherit curl's exit code.
-          # Only a definitive 200 blocks; the upload step stays the real judge.
+          version="${{ steps.version.outputs.version }}"
+          # `|| true`: steps run under `bash -e`, so a network blip would
+          # otherwise fail the build. Only a definitive 200 blocks.
           code="$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' \
-            "https://pypi.org/pypi/como/$version/json" || true)"
+            "https://pypi.org/pypi/$PACKAGE_NAME/$version/json" || true)"
           if [ "$code" = "200" ]; then
-            echo "::error::como $version is already on PyPI -- bump the version and re-tag"
+            echo "::error::$PACKAGE_NAME $version is already on PyPI -- bump the version and re-tag"
             exit 1
           fi
+
+      - name: Extract changelog section
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          awk -v heading="## $version ##" '
+            $0 == heading {found = 1; next}
+            found && /^## / {exit}
+            found {print}
+          ' HISTORY.md > release-notes.md
+          # grep, not `[ -s ]`: a heading followed by blank lines is non-empty.
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::HISTORY.md has no '## $version ##' section. Add one before releasing."
+            exit 1
+          fi
+          cat release-notes.md
+
       - run: uv build
+
+      # Carried through publish and the release so both get the same bytes.
       - uses: actions/upload-artifact@v7
         with:
-          name: dist
-          path: dist/
+          name: release-${{ steps.version.outputs.version }}
+          path: |
+            dist/
+            release-notes.md
+          if-no-files-found: error
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
   test:
-    name: Tests (pytest)
+    name: Tests (pytest ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
       - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run ty check
       - run: uv run pytest
 
   publish-pypi:
@@ -72,32 +110,25 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
         with:
-          name: dist
-          path: dist/
+          name: release-${{ needs.build.outputs.version }}
+      # No `skip-existing`: it would turn a same-version mistake into a silent
+      # success. The pre-check in build is the guard.
       - uses: pypa/gh-action-pypi-publish@release/v1
 
   github-release:
     name: Create GitHub release
-    needs: publish-pypi
+    needs: [build, publish-pypi]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
-          name: dist
-          path: dist/
-      - name: Extract changelog section
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          awk -v ver="## $version ##" '
-            $0 == ver {found=1; next}
-            found && /^## / {exit}
-            found {print}
-          ' HISTORY.md > release_notes.md
+          name: release-${{ needs.build.outputs.version }}
       - uses: softprops/action-gh-release@v3
         with:
+          tag_name: v${{ needs.build.outputs.version }}
+          name: v${{ needs.build.outputs.version }}
+          body_path: release-notes.md
           files: dist/*
-          body_path: release_notes.md
-          generate_release_notes: true
+          fail_on_unmatched_files: true

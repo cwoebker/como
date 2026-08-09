@@ -1,4 +1,5 @@
 version: 2
+
 updates:
   - package-ecosystem: "uv"
     directory: "/"
@@ -12,3 +13,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]

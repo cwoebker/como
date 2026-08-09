@@ -7,11 +7,36 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
+keywords = ["cli", "battery", "health", "macos", "linux", "sqlite"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: System :: Hardware",
+    "Topic :: System :: Monitoring",
+    "Topic :: Utilities",
+]
 dependencies = [
     "click>=8.4.2",
     "rich>=13.0",
     "python-crontab>=3.0; sys_platform == 'linux'",
 ]
+
+[project.urls]
+Homepage = "https://github.com/cwoebker/como"
+Repository = "https://github.com/cwoebker/como"
+Changelog = "https://github.com/cwoebker/como/blob/master/HISTORY.md"
+Issues = "https://github.com/cwoebker/como/issues"
 
 [project.scripts]
 como = "como.cli:main"
@@ -19,6 +44,12 @@ como = "como.cli:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["como"]
+
+[tool.hatch.build.targets.sdist]
+include = ["como", "tests", "README.md", "HISTORY.md", "LICENSE"]
 
 [dependency-groups]
 dev = [
@@ -31,7 +62,12 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=como --cov-report=term-missing --cov-branch"
+addopts = [
+    "--cov=como",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--strict-markers",
+]
 
 [tool.coverage.run]
 source = ["como"]
@@ -40,6 +76,7 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]
 
 [tool.ruff]
 target-version = "py310"
@@ -50,6 +87,9 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["como"]
+
+[tool.ty.src]
+include = ["como", "tests"]
 
 [tool.ty.environment]
 python-version = "3.10"

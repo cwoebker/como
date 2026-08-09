@@ -1,8 +1,10 @@
 # como — track battery health from the command line
 
+[![CI](https://github.com/cwoebker/como/actions/workflows/ci.yml/badge.svg)](https://github.com/cwoebker/como/actions/workflows/ci.yml)
 [![PyPI Version](https://img.shields.io/pypi/v/como.svg)](https://pypi.python.org/pypi/como)
 [![PyPI Python Versions](https://img.shields.io/pypi/pyversions/como.svg)](https://pypi.python.org/pypi/como)
-[![PyPI License](https://img.shields.io/pypi/l/como.svg)](https://pypi.python.org/pypi/como)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 `como` is a minimal CLI for recording and inspecting your laptop battery's health over time. It runs on macOS and Linux, stores everything locally in SQLite, and can schedule itself via `launchd` or `cron`.
 
