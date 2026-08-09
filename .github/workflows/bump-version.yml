@@ -1,17 +1,14 @@
 name: Bump version
 
-# Write the HISTORY.md entry first -- this refuses to tag without one, so the
-# failure happens here rather than after the package is already on PyPI.
-
 on:
   workflow_dispatch:
     inputs:
       bump:
-        description: "Version part to bump"
+        description: "auto = release the top unreleased HISTORY.md section; patch/minor/major = bump and generate notes from commit subjects"
         required: true
         type: choice
-        options: [patch, minor, major]
-        default: patch
+        options: [auto, patch, minor, major]
+        default: auto
 
 permissions:
   contents: read
@@ -22,11 +19,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  bump:
+  prepare:
+    name: Prepare release
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      actions: write
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -36,19 +33,82 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Bump version
+      - name: Resolve target version
         id: bump
+        env:
+          BUMP: ${{ inputs.bump }}
         run: |
-          uv version --bump ${{ inputs.bump }} --no-sync
-          echo "version=$(uv version --short)" >> "$GITHUB_OUTPUT"
+          current="$(uv version --short)"
 
-      - name: Require a changelog entry
+          if [ "$BUMP" = "auto" ]; then
+            target="$(sed -n 's/^## \([0-9][0-9.]*\) ##$/\1/p' HISTORY.md | head -1)"
+            if [ -z "$target" ]; then
+              echo "::error::HISTORY.md has no '## X.Y.Z ##' section to release."
+              exit 1
+            fi
+            if [ "$target" = "$current" ]; then
+              echo "::error::HISTORY.md starts at $current, which is the current version. Add a section for the new release, or pick patch/minor/major."
+              exit 1
+            fi
+            if [ "$(printf '%s\n%s\n' "$current" "$target" | sort -V | tail -1)" != "$target" ]; then
+              echo "::error::HISTORY.md starts at $target, which is not newer than $current."
+              exit 1
+            fi
+            uv version "$target" --no-sync
+          else
+            uv version --bump "$BUMP" --no-sync
+            target="$(uv version --short)"
+          fi
+
+          echo "version=$target" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure a changelog entry
+        env:
+          BUMP: ${{ inputs.bump }}
+          VERSION: ${{ steps.bump.outputs.version }}
         run: |
-          version="${{ steps.bump.outputs.version }}"
-          if ! grep -qxF "## $version ##" HISTORY.md; then
-            echo "::error::HISTORY.md has no '## $version ##' section. Add it, then re-run this workflow."
+          if grep -qxF "## $VERSION ##" HISTORY.md; then
+            # Section written by hand. Add today's date only if it has none.
+            if ! awk -v h="## $VERSION ##" '
+              $0 == h {f = 1; next}
+              f && /^## / {exit}
+              f && /^\*.*\*$/ {found = 1}
+              END {exit !found}
+            ' HISTORY.md; then
+              awk -v h="## $VERSION ##" -v d="*$(date -I)*" '
+                {print}
+                $0 == h {print ""; print d}
+              ' HISTORY.md > HISTORY.tmp && mv HISTORY.tmp HISTORY.md
+            fi
+            exit 0
+          fi
+
+          if [ "$BUMP" = "auto" ]; then
+            echo "::error::No '## $VERSION ##' section in HISTORY.md."
             exit 1
           fi
+
+          last_tag="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+          subjects="$(git log ${last_tag:+"$last_tag"..}HEAD --no-merges --pretty='- %s' \
+            | grep -v '^- Bump version to ' || true)"
+          notes="$(printf '%s\n' "$subjects" | grep -v '^- Bump ' || true)"
+          if printf '%s\n' "$subjects" | grep -q '^- Bump '; then
+            if [ -n "$notes" ]; then
+              notes="$(printf '%s\n- Dependency updates' "$notes")"
+            else
+              notes="- Dependency updates"
+            fi
+          fi
+          if [ -z "$(printf '%s' "$notes" | tr -d '[:space:]')" ]; then
+            notes="- Maintenance release"
+          fi
+
+          section="$(printf '## %s ##\n\n*%s*\n\n%s' "$VERSION" "$(date -I)" "$notes")"
+          SECTION="$section" awk '
+            !done && /^## / {print ENVIRON["SECTION"]; print ""; done = 1}
+            {print}
+            END {if (!done) {print ""; print ENVIRON["SECTION"]}}
+          ' HISTORY.md > HISTORY.tmp && mv HISTORY.tmp HISTORY.md
 
       - name: Guard against re-releasing a published version
         run: |
@@ -60,6 +120,69 @@ jobs:
             exit 1
           fi
 
+      # The approval dialog cannot render content, so the reviewer reads the
+      # notes here -- this summary is written before the gate blocks.
+      - name: Summarise the release
+        env:
+          BUMP: ${{ inputs.bump }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          {
+            echo "## como $VERSION"
+            echo
+            if [ "$BUMP" = "auto" ]; then
+              echo "Notes written by hand in HISTORY.md."
+            else
+              echo "**Notes generated from commit subjects** -- review before approving."
+            fi
+            echo
+            awk -v h="## $VERSION ##" '
+              $0 == h {f = 1; next}
+              f && /^## / {exit}
+              f {print}
+            ' HISTORY.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-prep-${{ github.run_id }}
+          path: |
+            pyproject.toml
+            uv.lock
+            HISTORY.md
+          if-no-files-found: error
+
+  approve:
+    name: Approve generated notes
+    needs: prepare
+    if: inputs.bump != 'auto'
+    runs-on: ubuntu-latest
+    environment:
+      name: changelog-review
+      url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - run: echo "Approved ${{ needs.prepare.outputs.version }}"
+
+  publish:
+    name: Commit and tag
+    needs: [prepare, approve]
+    # approve is skipped on the auto path, which would otherwise skip this too.
+    if: >-
+      !cancelled() && needs.prepare.result == 'success'
+      && (needs.approve.result == 'success' || needs.approve.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-prep-${{ github.run_id }}
+
       - name: Commit and tag
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
@@ -67,8 +190,8 @@ jobs:
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: |
-          version="${{ steps.bump.outputs.version }}"
-          git add pyproject.toml uv.lock
+          version="${{ needs.prepare.outputs.version }}"
+          git add pyproject.toml uv.lock HISTORY.md
           git commit -m "Bump version to $version"
           git tag -a "v$version" -m "v$version"
           # One push: two would leave a version commit with no tag if the
@@ -78,4 +201,4 @@ jobs:
       - name: Trigger release workflow
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run release.yml --ref "v${{ steps.bump.outputs.version }}"
+        run: gh workflow run release.yml --ref "v${{ needs.prepare.outputs.version }}"
