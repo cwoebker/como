@@ -1,6 +1,6 @@
 [project]
 name = "como"
-version = "0.8.0"
+version = "0.8.1"
 description = "Track battery health over time from the command line."
 authors = [{ name = "cwoebker" }]
 readme = "README.md"
