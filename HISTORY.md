@@ -1,5 +1,15 @@
 # History #
 
+## 0.8.1 ##
+
+*2026-08-15*
+
+- Declare supported Python versions in the package metadata, so PyPI reports 3.10 through 3.13 instead of nothing
+- Add Homepage, Repository, Changelog and Issues links to the PyPI page
+- Include `tests`, `HISTORY.md` and `LICENSE` in the source distribution
+- Test on Python 3.10, 3.11, 3.12 and 3.13, in CI and again before publishing
+- Release tooling: take the version and notes from this file, require a changelog entry before tagging, and check PyPI before a version can be reused
+
 ## 0.8.0 ##
 
 *June 2nd 2026*
